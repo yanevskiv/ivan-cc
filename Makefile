@@ -26,6 +26,10 @@ AS_OBJS := $(OUT)/as.o $(OUT)/util/file.o $(OUT)/util/str.o $(OUT)/util/elf.o \
 	$(OUT)/arch/$(TARGET_ARCH)/enc.o
 LD_OBJS := $(OUT)/ld.o $(OUT)/util/elf.o $(OUT)/util/link.o $(OUT)/arch/$(TARGET_ARCH)/rel.o
 
+TEST_TOOL  := tools/$(TARGET)-test
+TEST_SRCS  := $(sort $(wildcard tests/test*.c))
+TEST_NAMES := $(patsubst tests/%.c,%,$(TEST_SRCS))
+
 CC_BIN := $(BUILD)/bin/$(TARGET)-cc
 AS_BIN := $(BUILD)/bin/$(TARGET)-as
 LD_BIN := $(BUILD)/bin/$(TARGET)-ld
@@ -36,6 +40,8 @@ all: $(CC_BIN) $(AS_BIN) $(LD_BIN) $(CRT_OBJ) $(LIBC_OBJ)
 clean:
 	rm -rf $(BUILD) $(OUT)
 
+tests: $(TEST_NAMES)
+
 # --- tool recipes ---
 $(CC_BIN): $(CC_OBJS) | $(BUILD)/bin
 	$(CC) $(CFLAGS) $(WARN) $^ -o $@
@@ -45,6 +51,10 @@ $(AS_BIN): $(AS_OBJS) | $(BUILD)/bin
 
 $(LD_BIN): $(LD_OBJS) | $(BUILD)/bin
 	$(CC) $(CFLAGS) $(WARN) $^ -o $@
+
+# --- test recipes (one target per test, so `make test05_logical` works) ---
+$(TEST_NAMES): %: tests/%.c $(TEST_TOOL) $(CC_BIN) $(CRT_OBJ) $(LIBC_OBJ)
+	@$(TEST_TOOL) --compiler $(abspath $(CC_BIN)) $<
 
 # --- front-end generators ---
 $(OUT)/parser.tab.c $(OUT)/parser.tab.h: src/ast/parser.y | $(OUT)
@@ -84,4 +94,4 @@ $(BUILD)/bin: | $(BUILD)
 $(BUILD)/lib: | $(BUILD)
 	mkdir -p $(BUILD)/lib
 
-.PHONY: all clean
+.PHONY: all clean tests $(TEST_NAMES)

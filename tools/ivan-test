@@ -1,0 +1,113 @@
+#!/bin/sh
+#
+# ivan-test - compile one test file, run it, and check what it claims.
+
+set -u
+
+PROG=$(basename "$0")
+HERE=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+COMPILER="$HERE/build/bin/ivan-cc"
+TIMEOUT=5
+HEAD_LINES=10
+
+# Prints a usage summary and exits.
+usage()
+{
+    cat >&2 <<USAGE
+Usage: $PROG [options] TEST.c
+  -C, --compiler PATH   compiler to test (default: $COMPILER)
+  -t, --timeout SECS    seconds before the test is killed (default: $TIMEOUT)
+USAGE
+    exit 2
+}
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        -C|--compiler) [ $# -ge 2 ] || usage; COMPILER=$2; shift 2 ;;
+        -t|--timeout)  [ $# -ge 2 ] || usage; TIMEOUT=$2;  shift 2 ;;
+        -h|--help)     usage ;;
+        --)            shift; break ;;
+        -*)            printf '%s: unknown option %s\n' "$PROG" "$1" >&2; usage ;;
+        *)             break ;;
+    esac
+done
+
+[ $# -eq 1 ] || usage
+SOURCE=$1
+
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    GREEN=$(printf '\033[32m'); RED=$(printf '\033[31m'); RESET=$(printf '\033[0m')
+else
+    GREEN=; RED=; RESET=
+fi
+
+# Reports a passing test and exits.
+pass()
+{
+    printf '%sPASS%s: %s\n' "$GREEN" "$RESET" "$SOURCE"
+    exit 0
+}
+
+# Reports a failing test and exits, indenting the reason by four spaces.
+fail()
+{
+    printf '%sFAIL%s: %s\n' "$RED" "$RESET" "$SOURCE"
+    printf '%s\n' "$*" | sed 's/^/    /'
+    exit 1
+}
+
+# Echoes the value of a `// (Test) <key>:` directive, or nothing if the file
+# declares none. Keys match case-insensitively; `Return` is the spelling to use.
+get_value()
+{
+    head -n "$HEAD_LINES" "$SOURCE" \
+        | sed -n "s@^[[:space:]]*//[[:space:]]*(Test)[[:space:]]*$1[[:space:]]*:[[:space:]]*@@Ip" \
+        | sed 's/[[:space:]]*$//' \
+        | head -n 1
+}
+
+# Compiles the test, failing with whatever the compiler had to say.
+compile()
+{
+    "$COMPILER" "$SOURCE" -o "$BIN" >"$ERRS" 2>&1 || fail "Compilation failed
+$(cat "$ERRS")"
+}
+
+# Runs the test and checks its exit status against `// (Test) Return:`.
+test_return()
+{
+    expect=$(get_value 'return')
+
+    [ -n "$expect" ] || fail "No expectation declared"
+
+    case $expect in
+        *[!0-9]*) fail "Return expects a number between 0 and 255, got '$expect'" ;;
+    esac
+    [ "$expect" -le 255 ] || fail "Return expects a number between 0 and 255, got '$expect'"
+
+    compile
+
+    timeout "$TIMEOUT" "$BIN" >/dev/null 2>&1
+    status=$?
+
+    # Checked before the signal cases below, which a status of 204 is otherwise
+    # indistinguishable from.
+    [ "$status" -ne "$expect" ] || pass
+
+    [ "$status" -ne 124 ] || fail "Timed out after ${TIMEOUT}s"
+    [ "$status" -le 128 ] || fail "Died from signal $((status - 128)), expected to return $expect"
+
+    fail "Returned $status but expected $expect"
+}
+
+[ -f "$SOURCE" ] || fail "No such file"
+[ -x "$COMPILER" ] || fail "Compiler not executable: $COMPILER"
+
+WORK=$(mktemp -d) || fail "Cannot create a temporary directory"
+trap 'rm -rf "$WORK"' EXIT INT TERM
+
+BIN="$WORK/a.out"
+ERRS="$WORK/compile.err"
+
+test_return
