@@ -10,54 +10,31 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 COMPILER="$HERE/build/bin/ivan-cc"
 TIMEOUT=5
 HEAD_LINES=10
+SOURCE=${1:-}
 
-# Prints a usage summary and exits.
-usage()
+# Report a problem with the run itself rather than with the test, and exit.
+error()
 {
-    cat >&2 <<USAGE
-Usage: $PROG [options] TEST.c
-  -C, --compiler PATH   compiler to test (default: $COMPILER)
-  -t, --timeout SECS    seconds before the test is killed (default: $TIMEOUT)
-USAGE
+    printf '%s: %s\n' "$PROG" "$*" >&2
     exit 2
 }
 
-while [ $# -gt 0 ]; do
-    case $1 in
-        -C|--compiler) [ $# -ge 2 ] || usage; COMPILER=$2; shift 2 ;;
-        -t|--timeout)  [ $# -ge 2 ] || usage; TIMEOUT=$2;  shift 2 ;;
-        -h|--help)     usage ;;
-        --)            shift; break ;;
-        -*)            printf '%s: unknown option %s\n' "$PROG" "$1" >&2; usage ;;
-        *)             break ;;
-    esac
-done
-
-[ $# -eq 1 ] || usage
-SOURCE=$1
-
-if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
-    GREEN=$(printf '\033[32m'); RED=$(printf '\033[31m'); RESET=$(printf '\033[0m')
-else
-    GREEN=; RED=; RESET=
-fi
-
-# Reports a passing test and exits.
+# Report a passing test and exit.
 pass()
 {
-    printf '%sPASS%s: %s\n' "$GREEN" "$RESET" "$SOURCE"
+    printf '\033[32mPASS\033[0m: %s\n' "$SOURCE"
     exit 0
 }
 
-# Reports a failing test and exits, indenting the reason by four spaces.
+# Report a failing test and exit, indenting the reason by four spaces.
 fail()
 {
-    printf '%sFAIL%s: %s\n' "$RED" "$RESET" "$SOURCE"
+    printf '\033[31mFAIL\033[0m: %s\n' "$SOURCE"
     printf '%s\n' "$*" | sed 's/^/    /'
     exit 1
 }
 
-# Echoes the value of a `// (Test) <key>:` directive, or nothing if the file
+# Echo the value of a `// (Test) <key>:` directive, or nothing if the file
 # declares none. Keys match case-insensitively; `Return` is the spelling to use.
 get_value()
 {
@@ -67,47 +44,42 @@ get_value()
         | head -n 1
 }
 
-# Compiles the test, failing with whatever the compiler had to say.
-compile()
+# Compile the test, run it, and check its status against `// (Test) Return:`.
+do_test()
 {
-    "$COMPILER" "$SOURCE" -o "$BIN" >"$ERRS" 2>&1 || fail "Compilation failed
-$(cat "$ERRS")"
-}
+    [ -n "$SOURCE" ] || error "no test file given"
+    [ -f "$SOURCE" ] || error "no such file: $SOURCE"
+    [ -x "$COMPILER" ] || error "compiler not executable: $COMPILER"
 
-# Runs the test and checks its exit status against `// (Test) Return:`.
-test_return()
-{
-    expect=$(get_value 'return')
+    EXPECT=$(get_value 'return')
 
-    [ -n "$expect" ] || fail "No expectation declared"
+    [ -n "$EXPECT" ] || fail "No expectation declared"
 
-    case $expect in
-        *[!0-9]*) fail "Return expects a number between 0 and 255, got '$expect'" ;;
+    case $EXPECT in
+        *[!0-9]*) fail "Return expects a number between 0 and 255, got '$EXPECT'" ;;
     esac
-    [ "$expect" -le 255 ] || fail "Return expects a number between 0 and 255, got '$expect'"
 
-    compile
+    [ "$EXPECT" -le 255 ] || fail "Return expects a number between 0 and 255, got '$EXPECT'"
 
-    timeout "$TIMEOUT" "$BIN" >/dev/null 2>&1
-    status=$?
+    WORK_DIR=$(mktemp -d) || error "cannot create a temporary directory"
+    trap 'rm -rf "$WORK_DIR"' EXIT INT TERM
+
+    BINARY="$WORK_DIR/a.out"
+    COMPILE_ERR="$WORK_DIR/compile.err"
+
+    "$COMPILER" "$SOURCE" -o "$BINARY" >"$COMPILE_ERR" 2>&1 || fail "Compilation failed\n$(cat "$COMPILE_ERR")"
+
+    timeout "$TIMEOUT" "$BINARY" >/dev/null 2>&1
+
+    STATUS=$?
 
     # Checked before the signal cases below, which a status of 204 is otherwise
     # indistinguishable from.
-    [ "$status" -ne "$expect" ] || pass
+    [ "$STATUS" -ne "$EXPECT" ] || pass
+    [ "$STATUS" -ne 124 ] || fail "Timed out after ${TIMEOUT}s"
+    [ "$STATUS" -le 128 ] || fail "Died from signal $((STATUS - 128)), expected to return $EXPECT"
 
-    [ "$status" -ne 124 ] || fail "Timed out after ${TIMEOUT}s"
-    [ "$status" -le 128 ] || fail "Died from signal $((status - 128)), expected to return $expect"
-
-    fail "Returned $status but expected $expect"
+    fail "Returned $STATUS but expected $EXPECT"
 }
 
-[ -f "$SOURCE" ] || fail "No such file"
-[ -x "$COMPILER" ] || fail "Compiler not executable: $COMPILER"
-
-WORK=$(mktemp -d) || fail "Cannot create a temporary directory"
-trap 'rm -rf "$WORK"' EXIT INT TERM
-
-BIN="$WORK/a.out"
-ERRS="$WORK/compile.err"
-
-test_return
+do_test

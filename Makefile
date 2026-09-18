@@ -53,7 +53,7 @@ $(LD_BIN): $(LD_OBJS) | $(BUILD)/bin
 
 # --- test recipes (one target per test, so `make test05_logical` works) ---
 $(TEST_NAMES): %: tests/%.c $(TEST_TOOL) $(CC_BIN) $(CRT_OBJ) $(LIBC_OBJ)
-	@$(TEST_TOOL) --compiler $(abspath $(CC_BIN)) $<
+	@$(TEST_TOOL) $<
 
 # --- front-end generators ---
 $(OUT)/parser.tab.c $(OUT)/parser.tab.h: src/ast/parser.y | $(OUT)
