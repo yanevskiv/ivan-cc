@@ -5,14 +5,14 @@
 #include "arch/x86_64/asm.h"
 
 // Code emission helpers
-int  Gen_x86_64_Count(void);
-void Gen_x86_64_EmitPush(void);
-void Gen_x86_64_EmitPop(Asm_x86_64_Reg reg);
-int  Gen_x86_64_AlignTo(int n, int align);
-int  Gen_x86_64_TypeWidth(const Ast_Type *type);
-void Gen_x86_64_EmitAddr(Ast_Node *node);
-void Gen_x86_64_EmitLoad(const Ast_Type *type);
-void Gen_x86_64_EmitCast(const Ast_Type *type);
+int              Gen_x86_64_Count(void);
+void             Gen_x86_64_EmitPush(void);
+void             Gen_x86_64_EmitPop(Asm_x86_64_Reg reg);
+int              Gen_x86_64_AlignTo(int n, int align);
+Asm_x86_64_Width Gen_x86_64_TypeWidth(const Ast_Type *type);
+void             Gen_x86_64_EmitAddr(Ast_Node *node);
+void             Gen_x86_64_EmitLoad(const Ast_Type *type);
+void             Gen_x86_64_EmitCast(const Ast_Type *type);
 
 // Function call arguments
 int  Gen_x86_64_CallCountArgs(Ast_Node *args);

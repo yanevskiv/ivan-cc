@@ -15,7 +15,7 @@ Asm_x86_64_Operand Asm_x86_64_Reg64(Asm_x86_64_Reg reg)
     return (Asm_x86_64_Operand) {
         .ao_kind = ASM_X86_64_OPERAND_REG,
         .ao_reg = reg,
-        .ao_width = 64
+        .ao_width = ASM_X86_64_WIDTH_64
     };
 }
 
@@ -25,12 +25,12 @@ Asm_x86_64_Operand Asm_x86_64_Reg8(Asm_x86_64_Reg reg)
     return (Asm_x86_64_Operand) {
         .ao_kind = ASM_X86_64_OPERAND_REG,
         .ao_reg = reg,
-        .ao_width = 8
+        .ao_width = ASM_X86_64_WIDTH_8
     };
 }
 
 // Makes a register operand of the given width in bits.
-Asm_x86_64_Operand Asm_x86_64_RegWidth(Asm_x86_64_Reg reg, int width)
+Asm_x86_64_Operand Asm_x86_64_RegWidth(Asm_x86_64_Reg reg, Asm_x86_64_Width width)
 {
     return (Asm_x86_64_Operand) {
         .ao_kind = ASM_X86_64_OPERAND_REG,
@@ -208,7 +208,7 @@ void Asm_x86_64_EmitMovRR(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
 }
 
 // Emits `movs<w>q %src, %dst` (sign-extend the low width bits into 64 bits).
-void Asm_x86_64_EmitMovsx(Asm_x86_64_Reg src, Asm_x86_64_Reg dst, int width)
+void Asm_x86_64_EmitMovsx(Asm_x86_64_Reg src, Asm_x86_64_Reg dst, Asm_x86_64_Width width)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
     item->ai_op  = ASM_X86_64_OP_MOVSX;
@@ -326,17 +326,17 @@ void Asm_x86_64_EmitSubImm(long imm, Asm_x86_64_Reg dst)
 }
 
 // Emits a load of width bits from disp(%base) into the full 64-bit %dst.
-void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst, int width)
+void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst, Asm_x86_64_Width width)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
-    item->ai_op  = width == 64 ? ASM_X86_64_OP_MOV : ASM_X86_64_OP_MOVSX;
+    item->ai_op  = width == ASM_X86_64_WIDTH_64 ? ASM_X86_64_OP_MOV : ASM_X86_64_OP_MOVSX;
     item->ai_dst = Asm_x86_64_Reg64(dst);
     item->ai_src = Asm_x86_64_Mem(base, disp);
     item->ai_src.ao_width = width;
 }
 
 // Emits a store of the low width bits of %src to disp(%base).
-void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp, int width)
+void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp, Asm_x86_64_Width width)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
     item->ai_op  = ASM_X86_64_OP_MOV;

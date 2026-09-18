@@ -61,9 +61,9 @@ int Gen_x86_64_AlignTo(int n, int align)
 }
 
 // Returns the operand width in bits used to load or store a value of type.
-int Gen_x86_64_TypeWidth(const Ast_Type *type)
+Asm_x86_64_Width Gen_x86_64_TypeWidth(const Ast_Type *type)
 {
-    return type->at_size * 8;
+    return type->at_size * ASM_X86_64_BITS_PER_BYTE;
 }
 
 // Computes the address of an lvalue into %rax.
@@ -96,10 +96,10 @@ void Gen_x86_64_EmitCast(const Ast_Type *type)
 {
     switch (type->at_kind) {
         case AST_TYPE_KIND_CHAR: {
-            Asm_x86_64_EmitMovsx(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RAX, AST_TYPE_SIZE_CHAR * 8);
+            Asm_x86_64_EmitMovsx(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RAX, ASM_X86_64_WIDTH_8);
         } break;
         case AST_TYPE_KIND_INT: {
-            Asm_x86_64_EmitMovsx(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RAX, AST_TYPE_SIZE_INT * 8);
+            Asm_x86_64_EmitMovsx(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RAX, ASM_X86_64_WIDTH_32);
         } break;
         case AST_TYPE_KIND_VOID:
         case AST_TYPE_KIND_PTR:
@@ -387,12 +387,12 @@ void Gen_x86_64_EmitFunctions(Ast_Func *prog)
         // spill incoming parameters
         int i = 0;
         for (Ast_Var *param = func->af_params; param; param = param->av_param_next) {
-            int width = Gen_x86_64_TypeWidth(param->av_type);
+            Asm_x86_64_Width width = Gen_x86_64_TypeWidth(param->av_type);
             if (i < MAX_REG_ARGS) {
                 Asm_x86_64_EmitMovStore(Gen_x86_64_ArgReg[i], ASM_X86_64_REG_RBP, param->av_offset, width);
             } else {
                 int off = 2 * WORD_SIZE + (i - MAX_REG_ARGS) * WORD_SIZE;
-                Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RBP, off, ASM_X86_64_REG_RAX, 64);
+                Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RBP, off, ASM_X86_64_REG_RAX, ASM_X86_64_WIDTH_64);
                 Asm_x86_64_EmitMovStore(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RBP, param->av_offset, width);
             }
             i++;

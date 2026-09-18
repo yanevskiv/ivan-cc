@@ -126,7 +126,7 @@ void Enc_x86_64_RecordFixup(const char *name, uint32_t type);
 // REX and ModRM encoding
 int  Enc_x86_64_RegHigh(Asm_x86_64_Reg reg);
 void Enc_x86_64_EmitRexW(int regHigh, int rmHigh);
-void Enc_x86_64_EmitRex(int width, Asm_x86_64_Reg reg, Asm_x86_64_Reg rm);
+void Enc_x86_64_EmitRex(Asm_x86_64_Width width, Asm_x86_64_Reg reg, Asm_x86_64_Reg rm);
 void Enc_x86_64_EmitModRR(int reg, Asm_x86_64_Reg rm);
 void Enc_x86_64_EmitMem(int reg, Asm_x86_64_Reg base, int disp);
 
@@ -135,7 +135,7 @@ void Enc_x86_64_EmitRR(int opcode, Asm_x86_64_Reg src, Asm_x86_64_Reg dst);
 void Enc_x86_64_EmitGrpImm(int grp, long imm, Asm_x86_64_Reg dst);
 void Enc_x86_64_EmitMovImm(long imm, Asm_x86_64_Reg dst);
 void Enc_x86_64_EmitMovImm8(long imm, Asm_x86_64_Reg dst);
-void Enc_x86_64_EmitMemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base, int disp, int width);
+void Enc_x86_64_EmitMemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base, int disp, Asm_x86_64_Width width);
 void Enc_x86_64_EmitMovsx(const Asm_x86_64_Item *item);
 void Enc_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label);
 void Enc_x86_64_EmitGrpUnary(int grp, Asm_x86_64_Reg reg);

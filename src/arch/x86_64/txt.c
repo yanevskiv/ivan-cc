@@ -86,9 +86,9 @@ void Txt_x86_64_Att_WriteOperand(FILE *out, const Asm_x86_64_Operand *op)
     switch (op->ao_kind) {
         case ASM_X86_64_OPERAND_REG: {
             const char *name = Txt_x86_64_Reg64Name[op->ao_reg];
-            if (op->ao_width == 8) {
+            if (op->ao_width == ASM_X86_64_WIDTH_8) {
                 name = Txt_x86_64_Reg8Name[op->ao_reg];
-            } else if (op->ao_width == 32) {
+            } else if (op->ao_width == ASM_X86_64_WIDTH_32) {
                 name = Txt_x86_64_Reg32Name[op->ao_reg];
             }
             fprintf(out, "%%%s", name);
@@ -119,7 +119,7 @@ void Txt_x86_64_Att_WriteOperand(FILE *out, const Asm_x86_64_Operand *op)
 void Txt_x86_64_Att_WriteInstr(FILE *out, const Asm_x86_64_Item *item)
 {
     if (item->ai_op == ASM_X86_64_OP_MOVSX) {
-        fprintf(out, "  movs%cq", item->ai_src.ao_width == 8 ? 'b' : 'l');
+        fprintf(out, "  movs%cq", item->ai_src.ao_width == ASM_X86_64_WIDTH_8 ? 'b' : 'l');
     } else {
         fprintf(out, "  %s", Txt_x86_64_OpName[item->ai_op]);
     }
@@ -172,19 +172,19 @@ void Txt_x86_64_Att_Write(FILE *out)
 }
 
 // Returns the register index for an AT&T name like "rax"/"al", or -1; sets *width.
-int Txt_x86_64_RegByName(const char *name, int *width)
+int Txt_x86_64_RegByName(const char *name, Asm_x86_64_Width *width)
 {
     for (int i = 0; i < 16; i++) {
         if (strcmp(name, Txt_x86_64_Reg64Name[i]) == 0) {
-            *width = 64;
+            *width = ASM_X86_64_WIDTH_64;
             return i;
         }
         if (strcmp(name, Txt_x86_64_Reg32Name[i]) == 0) {
-            *width = 32;
+            *width = ASM_X86_64_WIDTH_32;
             return i;
         }
         if (strcmp(name, Txt_x86_64_Reg8Name[i]) == 0) {
-            *width = 8;
+            *width = ASM_X86_64_WIDTH_8;
             return i;
         }
     }
@@ -209,7 +209,7 @@ int Txt_x86_64_Att_ParseOperand(const char *text, Asm_x86_64_Operand *op)
     char *g[3];
 
     if (text[0] == '%' && Str_RegexExtract(text, "^%([A-Za-z][A-Za-z0-9]*)$", g, 1)) {
-        int width;
+        Asm_x86_64_Width width;
         int reg = Txt_x86_64_RegByName(g[0], &width);
         Str_Free(g[0]);
         if (reg < 0) {
@@ -230,7 +230,7 @@ int Txt_x86_64_Att_ParseOperand(const char *text, Asm_x86_64_Operand *op)
         return 1;
     }
     if (Str_RegexExtract(text, "^(-?(0[xX][0-9A-Fa-f]+|[0-9]+))?[(]%([A-Za-z][A-Za-z0-9]*)[)]$", g, 3)) {
-        int width;
+        Asm_x86_64_Width width;
         int base = Txt_x86_64_RegByName(g[2], &width);
         int disp = g[0] ? (int) strtol(g[0], NULL, 0) : 0;
         Str_Free(g[0]);
@@ -296,11 +296,11 @@ void Txt_x86_64_Att_ParseInstr(const char *line)
     mnem[mlen] = '\0';
 
     // movsbq / movslq name their source width, so they resolve before the rest.
-    int movsx_width = 0;
+    Asm_x86_64_Width movsx_width = ASM_X86_64_WIDTH_NONE;
     if (Str_Equals(mnem, "movsbq")) {
-        movsx_width = 8;
+        movsx_width = ASM_X86_64_WIDTH_8;
     } else if (Str_Equals(mnem, "movslq")) {
-        movsx_width = 32;
+        movsx_width = ASM_X86_64_WIDTH_32;
     }
 
     // Accept an AT&T size suffix (movq, pushq, movzbl) by retrying without it.

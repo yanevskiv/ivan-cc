@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+// Bits in a byte, for turning a type's size into an operand width.
+#define ASM_X86_64_BITS_PER_BYTE 8
+
 // Registers
 typedef enum Asm_x86_64_Reg Asm_x86_64_Reg;
 enum Asm_x86_64_Reg {
@@ -22,6 +25,15 @@ enum Asm_x86_64_Reg {
     ASM_X86_64_REG_R13,
     ASM_X86_64_REG_R14,
     ASM_X86_64_REG_R15
+};
+
+// The width in bits of a register operand, and so of the access it makes.
+typedef enum Asm_x86_64_Width Asm_x86_64_Width;
+enum Asm_x86_64_Width {
+    ASM_X86_64_WIDTH_NONE = 0, // the operand is not a register
+    ASM_X86_64_WIDTH_8    = 8,
+    ASM_X86_64_WIDTH_32   = 32,
+    ASM_X86_64_WIDTH_64   = 64
 };
 
 // Opcodes
@@ -71,7 +83,7 @@ struct Asm_x86_64_Operand {
     long                   ao_imm;    // IMM
     int                    ao_disp;   // MEM displacement
     const char            *ao_label;  // RIP / LABEL
-    int                    ao_width;  // REG width in bits: 8 or 64
+    Asm_x86_64_Width       ao_width;  // REG width, as ASM_X86_64_WIDTH_*
 };
 
 // The kind of one item in the instruction list.
@@ -105,7 +117,7 @@ struct Asm_x86_64_Item {
 // Operand constructors
 Asm_x86_64_Operand Asm_x86_64_Reg64(Asm_x86_64_Reg reg);
 Asm_x86_64_Operand Asm_x86_64_Reg8(Asm_x86_64_Reg reg);
-Asm_x86_64_Operand Asm_x86_64_RegWidth(Asm_x86_64_Reg reg, int width);
+Asm_x86_64_Operand Asm_x86_64_RegWidth(Asm_x86_64_Reg reg, Asm_x86_64_Width width);
 Asm_x86_64_Operand Asm_x86_64_Imm(long val);
 Asm_x86_64_Operand Asm_x86_64_Mem(Asm_x86_64_Reg base, int disp);
 Asm_x86_64_Operand Asm_x86_64_Rip(const char *label);
@@ -129,7 +141,7 @@ void Asm_x86_64_EmitSub(Asm_x86_64_Reg src, Asm_x86_64_Reg dst);
 void Asm_x86_64_EmitImul(Asm_x86_64_Reg src, Asm_x86_64_Reg dst);
 void Asm_x86_64_EmitCmp(Asm_x86_64_Reg src, Asm_x86_64_Reg dst);
 void Asm_x86_64_EmitMovRR(Asm_x86_64_Reg src, Asm_x86_64_Reg dst);
-void Asm_x86_64_EmitMovsx(Asm_x86_64_Reg src, Asm_x86_64_Reg dst, int width);
+void Asm_x86_64_EmitMovsx(Asm_x86_64_Reg src, Asm_x86_64_Reg dst, Asm_x86_64_Width width);
 
 // Single register
 void Asm_x86_64_EmitIdiv(Asm_x86_64_Reg reg);
@@ -151,8 +163,8 @@ void Asm_x86_64_EmitAddImm(long imm, Asm_x86_64_Reg dst);
 void Asm_x86_64_EmitSubImm(long imm, Asm_x86_64_Reg dst);
 
 // Memory loads, stores and addresses
-void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst, int width);
-void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp, int width);
+void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst, Asm_x86_64_Width width);
+void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp, Asm_x86_64_Width width);
 void Asm_x86_64_EmitLea(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst);
 void Asm_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label, ...);
 
