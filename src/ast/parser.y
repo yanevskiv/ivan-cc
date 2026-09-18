@@ -21,8 +21,7 @@
 int  yylex(void);
 void yyerror(const char *s);
 
-/* A location is the line a token starts on, so a rule spans no range: it
- * inherits the line of its first token, or of the token before an empty rule. */
+/* Gives a rule the line of its first token, or of the preceding one if empty. */
 #define YYLLOC_DEFAULT(cur, rhs, n)  ((cur) = (n) ? YYRHSLOC(rhs, 1) : YYRHSLOC(rhs, 0))
 
 /* State for the function definition currently being parsed. */
@@ -59,6 +58,7 @@ static void add_function(Ast_Func *fn)
     char     *str;
     Ast_Str   str_lit;
     Ast_Node *node;
+    Ast_Type *type;
 }
 
 %token <num>     NUM
@@ -70,6 +70,8 @@ static void add_function(Ast_Func *fn)
 %token LPAREN RPAREN LSQUARE RSQUARE LBRACE RBRACE SEMI COMMA ELLIPSIS
 
 %type <node> stmt stmt_list compound_stmt decl expr expr_opt args arg_list
+%type <type> type_name base
+%type <num>  stars
 
 /* Lowest precedence first. */
 %nonassoc LOWER_THAN_ELSE
@@ -131,15 +133,18 @@ param_list
     ;
 
 param
-    : type_name IDENT   { add_param(Ast_DeclareVar($2, @2)); }
+    : type_name IDENT   { add_param(Ast_DeclareVar($2, $1, @2)); }
     | type_name         /* unnamed parameter, e.g. `void` */
     | ELLIPSIS          /* variadic marker, ignored */
     ;
 
-/* ---- types (parsed, but otherwise ignored) ------------------------- */
+/* ---- types -------------------------------------------------------- */
 
 type_name
     : quals base stars
+        { Ast_Type *t = $2;
+          for (int i = 0; i < $3; i++) { t = Ast_NewPointer(t); }
+          $$ = t; }
     ;
 
 quals
@@ -148,14 +153,14 @@ quals
     ;
 
 base
-    : INT
-    | CHAR
-    | VOID
+    : INT                  { $$ = &Ast_TypeInt; }
+    | CHAR                 { $$ = &Ast_TypeChar; }
+    | VOID                 { $$ = &Ast_TypeVoid; }
     ;
 
 stars
-    : /* empty */
-    | stars MUL
+    : /* empty */          { $$ = 0; }
+    | stars MUL            { $$ = $1 + 1; }
     ;
 
 /* ---- statements ---------------------------------------------------- */
@@ -193,9 +198,9 @@ stmt
 
 decl
     : type_name IDENT
-        { Ast_DeclareVar($2, @2); $$ = Ast_NewNode(AST_NODE_KIND_NOP, @2); }
+        { Ast_DeclareVar($2, $1, @2); $$ = Ast_NewNode(AST_NODE_KIND_NOP, @2); }
     | type_name IDENT ASSIGN expr
-        { Ast_Var *v = Ast_DeclareVar($2, @2);
+        { Ast_Var *v = Ast_DeclareVar($2, $1, @2);
           Ast_Node *n = Ast_NewBinary(AST_NODE_KIND_ASSIGN, Ast_NewVarNode(v, @2), $4, @3);
           $$ = Ast_NewUnary(AST_NODE_KIND_EXPR_STMT, n, @2); }
     ;

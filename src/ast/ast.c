@@ -7,6 +7,34 @@
 // The finished program, filled in by the parser.
 Ast_Func *Ast_Program;
 
+// The primitive types.
+Ast_Type Ast_TypeVoid = { AST_TYPE_KIND_VOID, AST_TYPE_SIZE_VOID, AST_TYPE_ALIGN_VOID, NULL, 0 };
+Ast_Type Ast_TypeChar = { AST_TYPE_KIND_CHAR, AST_TYPE_SIZE_CHAR, AST_TYPE_ALIGN_CHAR, NULL, 0 };
+Ast_Type Ast_TypeInt  = { AST_TYPE_KIND_INT,  AST_TYPE_SIZE_INT,  AST_TYPE_ALIGN_INT,  NULL, 0 };
+
+// Builds the pointer type that points at base.
+Ast_Type *Ast_NewPointer(Ast_Type *base)
+{
+    Ast_Type *type = calloc(1, sizeof(Ast_Type));
+    type->at_kind  = AST_TYPE_KIND_PTR;
+    type->at_size  = AST_TYPE_SIZE_PTR;
+    type->at_align = AST_TYPE_ALIGN_PTR;
+    type->at_base  = base;
+    return type;
+}
+
+// Builds the type of an array of len elements of base.
+Ast_Type *Ast_NewArray(Ast_Type *base, int len)
+{
+    Ast_Type *type = calloc(1, sizeof(Ast_Type));
+    type->at_kind  = AST_TYPE_KIND_ARRAY;
+    type->at_size  = base->at_size * len;
+    type->at_align = base->at_align;
+    type->at_base  = base;
+    type->at_len   = len;
+    return type;
+}
+
 // Table of interned string literals, indexed by AST_NODE_KIND_STR slot.
 static Ast_Str Ast_Strings[MAX_STRINGS];
 
@@ -87,7 +115,7 @@ Ast_Var *Ast_FindVar(const char *name)
 }
 
 // Declares a variable in the current scope, reusing any existing slot.
-Ast_Var *Ast_DeclareVar(const char *name, int line)
+Ast_Var *Ast_DeclareVar(const char *name, Ast_Type *type, int line)
 {
     Ast_Var *var = Ast_FindVar(name);
     if (var) {
@@ -95,6 +123,7 @@ Ast_Var *Ast_DeclareVar(const char *name, int line)
     }
     var = calloc(1, sizeof(Ast_Var));
     var->av_name = strdup(name);
+    var->av_type = type;
     var->av_line = line;
     var->av_next = Ast_Locals;
     Ast_Locals = var;
