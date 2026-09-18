@@ -5,7 +5,7 @@
 #include <string.h>
 #include "util/str.h"
 
-// Returns a freshly allocated string formatted like printf(3).
+// Return a freshly allocated string formatted like printf(3).
 char *Str_Format(const char *fmt, ...)
 {
     va_list ap;
@@ -15,7 +15,7 @@ char *Str_Format(const char *fmt, ...)
     return out;
 }
 
-// Returns a freshly allocated string formatted from a va_list.
+// Return a freshly allocated string formatted from a va_list.
 char *Str_VFormat(const char *fmt, va_list ap)
 {
     va_list ap2;
@@ -28,7 +28,7 @@ char *Str_VFormat(const char *fmt, va_list ap)
     return out;
 }
 
-// Changes or appends a file extension ('main.c' -> 'main.s').
+// Change or append a file extension ('main.c' -> 'main.s').
 char *Str_ChangeOrAppendExt(const char *input, const char *suffix)
 {
     const char *slash = strrchr(input, '/');
@@ -46,19 +46,19 @@ char *Str_ChangeOrAppendExt(const char *input, const char *suffix)
     return out;
 }
 
-// Returns nonzero if the two strings are equal.
+// Return nonzero if the two strings are equal.
 int Str_Equals(const char *a, const char *b)
 {
     return strcmp(a, b) == 0;
 }
 
-// Returns nonzero if str begins with prefix.
+// Return nonzero if str begins with prefix.
 int Str_StartsWith(const char *str, const char *prefix)
 {
     return strncmp(str, prefix, strlen(prefix)) == 0;
 }
 
-// Trims leading and trailing whitespace in place, returning the new start.
+// Trim leading and trailing whitespace in place, returning the new start.
 char *Str_Trim(char *str)
 {
     while (*str && strchr(" \t\r\n\f\v", *str)) {
@@ -71,7 +71,7 @@ char *Str_Trim(char *str)
     return str;
 }
 
-// Releases a dynamically allocated string, ignoring a NULL one.
+// Release a dynamically allocated string, ignoring a NULL one.
 void Str_Free(char *str)
 {
     if (str) {
@@ -79,7 +79,7 @@ void Str_Free(char *str)
     }
 }
 
-// Splits str on each occurrence of sep into a list of owned pieces.
+// Split str on each occurrence of sep into a list of owned pieces.
 Str_List Str_Split(const char *str, const char *sep)
 {
     Str_List list = { NULL, 0 };
@@ -101,7 +101,7 @@ Str_List Str_Split(const char *str, const char *sep)
     return list;
 }
 
-// Frees every piece of a list and clears it.
+// Free every piece of a list and clear it.
 void Str_ListFree(Str_List *list)
 {
     for (int i = 0; i < list->sl_count; i++) {
@@ -112,7 +112,7 @@ void Str_ListFree(Str_List *list)
     list->sl_count = 0;
 }
 
-// Decodes a quoted-string body into raw bytes, stopping at the closing quote.
+// Decode a quoted-string body into raw bytes, stopping at the closing quote.
 char *Str_Unescape(const char *p, int len, int *out_len)
 {
     int n = 0;
@@ -159,7 +159,7 @@ char *Str_Unescape(const char *p, int len, int *out_len)
     return buf;
 }
 
-// Returns nonzero if the extended regex pattern matches anywhere in str.
+// Return nonzero if the extended regex pattern matches anywhere in str.
 int Str_RegexMatch(const char *str, const char *pattern)
 {
     regex_t re;
@@ -171,8 +171,8 @@ int Str_RegexMatch(const char *str, const char *pattern)
     return ok;
 }
 
-// Matches pattern against str, filling groups[0..ngroups-1] with owned capture
-// text (NULL where a group did not participate); returns nonzero on a match.
+// Match pattern against str, filling groups[0..ngroups-1] with owned capture
+// text (NULL where a group did not participate); return nonzero on a match.
 int Str_RegexExtract(const char *str, const char *pattern, char **groups, int ngroups)
 {
     for (int i = 0; i < ngroups; i++) {

@@ -32,7 +32,7 @@ long Link_SymbolIndex(const Elf *elf, const Elf_Sym *target)
     return -1;
 }
 
-// Finds an existing global symbol by name, or returns NULL.
+// Find an existing global symbol by name, or return NULL.
 Elf_Sym *Link_FindGlobal(Elf *elf, const char *name)
 {
     for (size_t i = 0; i < Elf_SymbolCount(elf); i++) {
@@ -44,7 +44,7 @@ Elf_Sym *Link_FindGlobal(Elf *elf, const char *name)
     return NULL;
 }
 
-// Merges one input object into the output, unifying globals and rebasing relocations.
+// Merge one input object into the output, unifying globals and rebasing relocations.
 void Link_Merge(Elf *out, Elf *in)
 {
     size_t nsec = Elf_SectionCount(in);
@@ -118,7 +118,7 @@ void Link_Merge(Elf *out, Elf *in)
     free(symmap);
 }
 
-// Reads each object file and merges it into out.
+// Read each object file and merge it into out.
 void Link_MergeFiles(Elf *out, const char *const *paths, int npaths)
 {
     for (int i = 0; i < npaths; i++) {
@@ -144,7 +144,7 @@ uint64_t Link_PlacedAddr(const Link_Options *opts, const char *name, int *placed
     return 0;
 }
 
-// Assigns each allocatable section its -place address, else the next free page.
+// Assign each allocatable section its -place address, else the next free page.
 void Link_PlaceSections(Elf *elf, const Link_Options *opts)
 {
     uint64_t next = LINK_BASE + LINK_PAGE;
@@ -166,7 +166,7 @@ void Link_PlaceSections(Elf *elf, const Link_Options *opts)
     }
 }
 
-// Aborts if any relocation references a symbol that was never defined.
+// Abort if any relocation references a symbol that was never defined.
 void Link_CheckDefined(Elf *elf)
 {
     for (size_t i = 0; i < Elf_SectionCount(elf); i++) {
@@ -180,7 +180,7 @@ void Link_CheckDefined(Elf *elf)
     }
 }
 
-// Finalizes an in-memory object into a static executable.
+// Finalize an in-memory object into a static executable.
 void Link_Exec(Elf *elf, const Link_Options *opts)
 {
     const char *entry = opts->lo_entry ? opts->lo_entry : "_start";
@@ -198,7 +198,7 @@ void Link_Exec(Elf *elf, const Link_Options *opts)
     Elf_SetType(elf, ELF_ET_EXEC);
 }
 
-// Reads and links the given objects into one Elf.
+// Read and link the given objects into one Elf.
 Elf *Link_Run(const char *const *paths, int npaths, const Link_Options *opts)
 {
     Elf *out = Elf_New(ELF_ET_REL, ELF_EM_X86_64);

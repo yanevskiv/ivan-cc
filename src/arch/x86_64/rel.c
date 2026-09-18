@@ -12,7 +12,7 @@ uint64_t Rel_x86_64_SymbolAddr(const Elf_Sym *sym)
     return sym->sym_value;
 }
 
-// Patches width little-endian bytes at a section offset with value.
+// Patch width little-endian bytes at a section offset with value.
 void Rel_x86_64_PatchLE(Elf_Sec *sec, uint64_t offset, uint64_t value, int width)
 {
     uint8_t *at = Elf_BufAt(Elf_SectionData(sec), offset);
@@ -21,7 +21,7 @@ void Rel_x86_64_PatchLE(Elf_Sec *sec, uint64_t offset, uint64_t value, int width
     }
 }
 
-// Applies one relocation, computing S (symbol), A (addend) and P (patch site).
+// Apply one relocation, computing S (symbol), A (addend) and P (patch site).
 void Rel_x86_64_One(Elf_Sec *sec, const Elf_Rela *rel)
 {
     uint64_t S = Rel_x86_64_SymbolAddr(rel->rel_sym);
@@ -46,7 +46,7 @@ void Rel_x86_64_One(Elf_Sec *sec, const Elf_Rela *rel)
     }
 }
 
-// Applies every relocation in a placed object, patching each section's bytes.
+// Apply every relocation in a placed object, patching each section's bytes.
 void Rel_x86_64_Apply(Elf *elf)
 {
     for (size_t i = 0; i < Elf_SectionCount(elf); i++) {

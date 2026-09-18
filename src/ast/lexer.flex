@@ -13,10 +13,10 @@
 #include "util/str.h"
 #include "parser.tab.h"
 
-/* Stamps every token with the line it starts on. */
+/* Stamp every token with the line it starts on. */
 #define YY_USER_ACTION  yylloc = yylineno;
 
-/* Decodes a C literal body into raw bytes, reporting the decoded length. */
+/* Decode a C literal body into raw bytes, reporting the decoded length. */
 static char *Lex_Unescape(const char *p, int len, int *out_len)
 {
     int n = 0;

@@ -9,7 +9,7 @@
 static Asm_x86_64_Item *Asm_x86_64_Head;
 static Asm_x86_64_Item *Asm_x86_64_Tail;
 
-// Makes a 64-bit register operand (%rax .. %r15).
+// Make a 64-bit register operand (%rax .. %r15).
 Asm_x86_64_Operand Asm_x86_64_Reg64(Asm_x86_64_Reg reg)
 {
     return (Asm_x86_64_Operand) {
@@ -19,7 +19,7 @@ Asm_x86_64_Operand Asm_x86_64_Reg64(Asm_x86_64_Reg reg)
     };
 }
 
-// Makes an 8-bit low-byte register operand (%al .. %r15b).
+// Make an 8-bit low-byte register operand (%al .. %r15b).
 Asm_x86_64_Operand Asm_x86_64_Reg8(Asm_x86_64_Reg reg)
 {
     return (Asm_x86_64_Operand) {
@@ -29,7 +29,7 @@ Asm_x86_64_Operand Asm_x86_64_Reg8(Asm_x86_64_Reg reg)
     };
 }
 
-// Makes a register operand of the given width in bits.
+// Make a register operand of the given width in bits.
 Asm_x86_64_Operand Asm_x86_64_RegWidth(Asm_x86_64_Reg reg, Asm_x86_64_Width width)
 {
     return (Asm_x86_64_Operand) {
@@ -39,7 +39,7 @@ Asm_x86_64_Operand Asm_x86_64_RegWidth(Asm_x86_64_Reg reg, Asm_x86_64_Width widt
     };
 }
 
-// Makes an immediate operand ($val).
+// Make an immediate operand ($val).
 Asm_x86_64_Operand Asm_x86_64_Imm(long val)
 {
     return (Asm_x86_64_Operand) {
@@ -48,7 +48,7 @@ Asm_x86_64_Operand Asm_x86_64_Imm(long val)
     };
 }
 
-// Makes a base-plus-displacement memory operand (disp(%base)).
+// Make a base-plus-displacement memory operand (disp(%base)).
 Asm_x86_64_Operand Asm_x86_64_Mem(Asm_x86_64_Reg base, int disp)
 {
     return (Asm_x86_64_Operand) {
@@ -58,7 +58,7 @@ Asm_x86_64_Operand Asm_x86_64_Mem(Asm_x86_64_Reg base, int disp)
     };
 }
 
-// Makes a RIP-relative operand naming a label (label(%rip)).
+// Make a RIP-relative operand naming a label (label(%rip)).
 Asm_x86_64_Operand Asm_x86_64_Rip(const char *label)
 {
     return (Asm_x86_64_Operand) {
@@ -67,7 +67,7 @@ Asm_x86_64_Operand Asm_x86_64_Rip(const char *label)
     };
 }
 
-// Makes a jump or call target operand.
+// Make a jump or call target operand.
 Asm_x86_64_Operand Asm_x86_64_Target(const char *label)
 {
     return (Asm_x86_64_Operand) {
@@ -76,7 +76,7 @@ Asm_x86_64_Operand Asm_x86_64_Target(const char *label)
     };
 }
 
-// Appends a fresh item of the given kind to the list and returns it.
+// Append a fresh item of the given kind to the list and return it.
 Asm_x86_64_Item *Asm_x86_64_New(Asm_x86_64_ItemKind kind)
 {
     Asm_x86_64_Item *item = calloc(1, sizeof(*item));
@@ -90,7 +90,7 @@ Asm_x86_64_Item *Asm_x86_64_New(Asm_x86_64_ItemKind kind)
     return item;
 }
 
-// Clears the instruction list before a fresh translation unit.
+// Clear the instruction list before a fresh translation unit.
 void Asm_x86_64_Reset(void)
 {
     Asm_x86_64_Item *item = Asm_x86_64_Head;
@@ -108,13 +108,13 @@ void Asm_x86_64_Reset(void)
     Asm_x86_64_Tail = NULL;
 }
 
-// Returns the head of the instruction list for a back end to walk.
+// Return the head of the instruction list for a back end to walk.
 Asm_x86_64_Item *Asm_x86_64_Items(void)
 {
     return Asm_x86_64_Head;
 }
 
-// Emits a label definition, named by a printf-style format.
+// Emit a label definition, named by a printf-style format.
 void Asm_x86_64_EmitLabel(const char *name, ...)
 {
     va_list ap;
@@ -124,7 +124,7 @@ void Asm_x86_64_EmitLabel(const char *name, ...)
     va_end(ap);
 }
 
-// Emits a switch to the named output section, created with type and flags.
+// Emit a switch to the named output section, created with type and flags.
 void Asm_x86_64_EmitSection(const char *name, uint32_t type, uint64_t flags)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_SECTION);
@@ -133,7 +133,7 @@ void Asm_x86_64_EmitSection(const char *name, uint32_t type, uint64_t flags)
     item->ai_secflags = flags;
 }
 
-// Marks a symbol global, named by a printf-style format.
+// Mark a symbol global, named by a printf-style format.
 void Asm_x86_64_EmitGlobl(const char *name, ...)
 {
     va_list ap;
@@ -143,7 +143,7 @@ void Asm_x86_64_EmitGlobl(const char *name, ...)
     va_end(ap);
 }
 
-// Emits a run of raw data bytes.
+// Emit a run of raw data bytes.
 void Asm_x86_64_EmitBytes(const void *data, int len)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_BYTES);
@@ -152,7 +152,7 @@ void Asm_x86_64_EmitBytes(const void *data, int len)
     item->ai_nbytes = len;
 }
 
-// Emits a raw assembler line from a printf-style format, written with indent.
+// Emit a raw assembler line from a printf-style format, written with indent.
 void Asm_x86_64_EmitDirective(const char *text, ...)
 {
     va_list ap;
@@ -162,7 +162,7 @@ void Asm_x86_64_EmitDirective(const char *text, ...)
     va_end(ap);
 }
 
-// Emits `add %src, %dst`.
+// Emit `add %src, %dst`.
 void Asm_x86_64_EmitAdd(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -171,7 +171,7 @@ void Asm_x86_64_EmitAdd(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Reg64(src);
 }
 
-// Emits `sub %src, %dst`.
+// Emit `sub %src, %dst`.
 void Asm_x86_64_EmitSub(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -180,7 +180,7 @@ void Asm_x86_64_EmitSub(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Reg64(src);
 }
 
-// Emits `imul %src, %dst`.
+// Emit `imul %src, %dst`.
 void Asm_x86_64_EmitImul(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -189,7 +189,7 @@ void Asm_x86_64_EmitImul(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Reg64(src);
 }
 
-// Emits `cmp %src, %dst`.
+// Emit `cmp %src, %dst`.
 void Asm_x86_64_EmitCmp(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -198,7 +198,7 @@ void Asm_x86_64_EmitCmp(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Reg64(src);
 }
 
-// Emits `mov %src, %dst` between two registers.
+// Emit `mov %src, %dst` between two registers.
 void Asm_x86_64_EmitMovRR(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -207,7 +207,7 @@ void Asm_x86_64_EmitMovRR(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Reg64(src);
 }
 
-// Emits `movs<w>q %src, %dst` (sign-extend the low width bits into 64 bits).
+// Emit `movs<w>q %src, %dst` (sign-extend the low width bits into 64 bits).
 void Asm_x86_64_EmitMovsx(Asm_x86_64_Reg src, Asm_x86_64_Reg dst, Asm_x86_64_Width width)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -216,7 +216,7 @@ void Asm_x86_64_EmitMovsx(Asm_x86_64_Reg src, Asm_x86_64_Reg dst, Asm_x86_64_Wid
     item->ai_src = Asm_x86_64_RegWidth(src, width);
 }
 
-// Emits `idiv %reg`.
+// Emit `idiv %reg`.
 void Asm_x86_64_EmitIdiv(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -224,7 +224,7 @@ void Asm_x86_64_EmitIdiv(Asm_x86_64_Reg reg)
     item->ai_dst = Asm_x86_64_Reg64(reg);
 }
 
-// Emits `neg %reg`.
+// Emit `neg %reg`.
 void Asm_x86_64_EmitNeg(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -232,14 +232,14 @@ void Asm_x86_64_EmitNeg(Asm_x86_64_Reg reg)
     item->ai_dst = Asm_x86_64_Reg64(reg);
 }
 
-// Emits `cqo` (sign-extend %rax into %rdx:%rax).
+// Emit `cqo` (sign-extend %rax into %rdx:%rax).
 void Asm_x86_64_EmitCqo(void)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
     item->ai_op = ASM_X86_64_OP_CQO;
 }
 
-// Emits `sete %reg`.
+// Emit `sete %reg`.
 void Asm_x86_64_EmitSete(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -247,7 +247,7 @@ void Asm_x86_64_EmitSete(Asm_x86_64_Reg reg)
     item->ai_dst = Asm_x86_64_Reg8(reg);
 }
 
-// Emits `setne %reg`.
+// Emit `setne %reg`.
 void Asm_x86_64_EmitSetne(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -255,7 +255,7 @@ void Asm_x86_64_EmitSetne(Asm_x86_64_Reg reg)
     item->ai_dst = Asm_x86_64_Reg8(reg);
 }
 
-// Emits `setl %reg`.
+// Emit `setl %reg`.
 void Asm_x86_64_EmitSetl(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -263,7 +263,7 @@ void Asm_x86_64_EmitSetl(Asm_x86_64_Reg reg)
     item->ai_dst = Asm_x86_64_Reg8(reg);
 }
 
-// Emits `setle %reg`.
+// Emit `setle %reg`.
 void Asm_x86_64_EmitSetle(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -271,7 +271,7 @@ void Asm_x86_64_EmitSetle(Asm_x86_64_Reg reg)
     item->ai_dst = Asm_x86_64_Reg8(reg);
 }
 
-// Emits `movzb %src, %dst` (zero-extend a byte into a 64-bit register).
+// Emit `movzb %src, %dst` (zero-extend a byte into a 64-bit register).
 void Asm_x86_64_EmitMovzb(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -280,7 +280,7 @@ void Asm_x86_64_EmitMovzb(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Reg8(src);
 }
 
-// Emits `cmp $imm, %dst`.
+// Emit `cmp $imm, %dst`.
 void Asm_x86_64_EmitCmpImm(long imm, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -289,7 +289,7 @@ void Asm_x86_64_EmitCmpImm(long imm, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Imm(imm);
 }
 
-// Emits `mov $imm, %dst` into a 64-bit register.
+// Emit `mov $imm, %dst` into a 64-bit register.
 void Asm_x86_64_EmitMovImm(long imm, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -298,7 +298,7 @@ void Asm_x86_64_EmitMovImm(long imm, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Imm(imm);
 }
 
-// Emits `mov $imm, %dst` into an 8-bit register.
+// Emit `mov $imm, %dst` into an 8-bit register.
 void Asm_x86_64_EmitMovImm8(long imm, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -307,7 +307,7 @@ void Asm_x86_64_EmitMovImm8(long imm, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Imm(imm);
 }
 
-// Emits `add $imm, %dst`.
+// Emit `add $imm, %dst`.
 void Asm_x86_64_EmitAddImm(long imm, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -316,7 +316,7 @@ void Asm_x86_64_EmitAddImm(long imm, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Imm(imm);
 }
 
-// Emits `sub $imm, %dst`.
+// Emit `sub $imm, %dst`.
 void Asm_x86_64_EmitSubImm(long imm, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -325,7 +325,7 @@ void Asm_x86_64_EmitSubImm(long imm, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Imm(imm);
 }
 
-// Emits a load of width bits from disp(%base) into the full 64-bit %dst.
+// Emit a load of width bits from disp(%base) into the full 64-bit %dst.
 void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst, Asm_x86_64_Width width)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -335,7 +335,7 @@ void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst, A
     item->ai_src.ao_width = width;
 }
 
-// Emits a store of the low width bits of %src to disp(%base).
+// Emit a store of the low width bits of %src to disp(%base).
 void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp, Asm_x86_64_Width width)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -344,7 +344,7 @@ void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp, 
     item->ai_src = Asm_x86_64_RegWidth(src, width);
 }
 
-// Emits `lea disp(%base), %dst`.
+// Emit `lea disp(%base), %dst`.
 void Asm_x86_64_EmitLea(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -353,7 +353,7 @@ void Asm_x86_64_EmitLea(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Mem(base, disp);
 }
 
-// Emits `lea label(%rip), %dst`, with label from a printf-style format.
+// Emit `lea label(%rip), %dst`, with label from a printf-style format.
 void Asm_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label, ...)
 {
     va_list ap;
@@ -365,7 +365,7 @@ void Asm_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label, ...)
     va_end(ap);
 }
 
-// Emits `push %reg`.
+// Emit `push %reg`.
 void Asm_x86_64_EmitPush(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -373,7 +373,7 @@ void Asm_x86_64_EmitPush(Asm_x86_64_Reg reg)
     item->ai_dst = Asm_x86_64_Reg64(reg);
 }
 
-// Emits `pop %reg`.
+// Emit `pop %reg`.
 void Asm_x86_64_EmitPop(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
@@ -381,7 +381,7 @@ void Asm_x86_64_EmitPop(Asm_x86_64_Reg reg)
     item->ai_dst = Asm_x86_64_Reg64(reg);
 }
 
-// Emits `jmp label`, with label from a printf-style format.
+// Emit `jmp label`, with label from a printf-style format.
 void Asm_x86_64_EmitJmp(const char *label, ...)
 {
     va_list ap;
@@ -392,7 +392,7 @@ void Asm_x86_64_EmitJmp(const char *label, ...)
     va_end(ap);
 }
 
-// Emits `je label`, with label from a printf-style format.
+// Emit `je label`, with label from a printf-style format.
 void Asm_x86_64_EmitJe(const char *label, ...)
 {
     va_list ap;
@@ -403,7 +403,7 @@ void Asm_x86_64_EmitJe(const char *label, ...)
     va_end(ap);
 }
 
-// Emits `jne label`, with label from a printf-style format.
+// Emit `jne label`, with label from a printf-style format.
 void Asm_x86_64_EmitJne(const char *label, ...)
 {
     va_list ap;
@@ -414,7 +414,7 @@ void Asm_x86_64_EmitJne(const char *label, ...)
     va_end(ap);
 }
 
-// Emits `call label`, with label from a printf-style format.
+// Emit `call label`, with label from a printf-style format.
 void Asm_x86_64_EmitCall(const char *label, ...)
 {
     va_list ap;
@@ -425,14 +425,14 @@ void Asm_x86_64_EmitCall(const char *label, ...)
     va_end(ap);
 }
 
-// Emits `ret`.
+// Emit `ret`.
 void Asm_x86_64_EmitRet(void)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
     item->ai_op = ASM_X86_64_OP_RET;
 }
 
-// Emits `syscall`.
+// Emit `syscall`.
 void Asm_x86_64_EmitSyscall(void)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);

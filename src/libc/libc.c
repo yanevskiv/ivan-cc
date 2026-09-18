@@ -1,7 +1,7 @@
-// Prints one byte to standard output; implemented in crt0.s.
+// Print one byte to standard output; implemented in crt0.s.
 int putchar(int c);
 
-// Prints the decimal digits of n, sign included, and returns n.
+// Print the decimal digits of n, sign included, and return n.
 int putd(int n)
 {
     if (n < 0) {

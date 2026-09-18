@@ -27,31 +27,31 @@ static Enc_x86_64_Fix *Enc_x86_64_Fixes;
 static size_t Enc_x86_64_NumFixes;
 static size_t Enc_x86_64_CapFixes;
 
-// Appends one byte to the current section.
+// Append one byte to the current section.
 void Enc_x86_64_Emit8(int byte)
 {
     Elf_BufByte(Elf_SectionData(Enc_x86_64_Cur), (uint8_t) byte);
 }
 
-// Appends a little-endian 32-bit value to the current section.
+// Append a little-endian 32-bit value to the current section.
 void Enc_x86_64_Emit32(uint32_t val)
 {
     Elf_BufU32(Elf_SectionData(Enc_x86_64_Cur), val);
 }
 
-// Appends a little-endian 64-bit value to the current section.
+// Append a little-endian 64-bit value to the current section.
 void Enc_x86_64_Emit64(uint64_t val)
 {
     Elf_BufU64(Elf_SectionData(Enc_x86_64_Cur), val);
 }
 
-// Appends a run of raw bytes to the current section.
+// Append a run of raw bytes to the current section.
 void Enc_x86_64_EmitRaw(const void *data, int len)
 {
     Elf_BufData(Elf_SectionData(Enc_x86_64_Cur), data, (size_t) len);
 }
 
-// Records a label at the current position in the current section.
+// Record a label at the current position in the current section.
 void Enc_x86_64_RecordLabel(const char *name)
 {
     if (Enc_x86_64_NumLabels == Enc_x86_64_CapLabels) {
@@ -65,7 +65,7 @@ void Enc_x86_64_RecordLabel(const char *name)
     };
 }
 
-// Records that name appeared in a .globl directive.
+// Record that name appeared in a .globl directive.
 void Enc_x86_64_RecordGlobl(const char *name)
 {
     if (Enc_x86_64_NumGlobls == Enc_x86_64_CapGlobls) {
@@ -75,7 +75,7 @@ void Enc_x86_64_RecordGlobl(const char *name)
     Enc_x86_64_Globls[Enc_x86_64_NumGlobls++] = name;
 }
 
-// Records a rel32 fixup at the current site; the caller writes the placeholder bytes.
+// Record a rel32 fixup at the current site; the caller writes the placeholder bytes.
 void Enc_x86_64_RecordFixup(const char *name, uint32_t type)
 {
     if (Enc_x86_64_NumFixes == Enc_x86_64_CapFixes) {
@@ -90,25 +90,25 @@ void Enc_x86_64_RecordFixup(const char *name, uint32_t type)
     };
 }
 
-// Returns the high bit of a register number, extending ModRM.reg or .rm.
+// Return the high bit of a register number, extending ModRM.reg or .rm.
 int Enc_x86_64_RegHigh(Asm_x86_64_Reg reg)
 {
     return reg >> ENC_X86_64_REG_SHIFT;
 }
 
-// Emits a REX.W prefix with the given reg- and rm-field extension bits.
+// Emit a REX.W prefix with the given reg- and rm-field extension bits.
 void Enc_x86_64_EmitRexW(int regHigh, int rmHigh)
 {
     Enc_x86_64_Emit8(ENC_X86_64_REX_BASE | ENC_X86_64_REX_W | (regHigh ? ENC_X86_64_REX_R : 0) | (rmHigh ? ENC_X86_64_REX_B : 0));
 }
 
-// Emits a register-direct ModRM byte pairing reg with rm.
+// Emit a register-direct ModRM byte pairing reg with rm.
 void Enc_x86_64_EmitModRR(int reg, Asm_x86_64_Reg rm)
 {
     Enc_x86_64_Emit8((ENC_X86_64_MOD_DIRECT << ENC_X86_64_MOD_SHIFT) | ((reg & ENC_X86_64_REG_MASK) << ENC_X86_64_REG_SHIFT) | (rm & ENC_X86_64_REG_MASK));
 }
 
-// Emits the ModRM, optional SIB and displacement for disp(%base).
+// Emit the ModRM, optional SIB and displacement for disp(%base).
 void Enc_x86_64_EmitMem(int reg, Asm_x86_64_Reg base, int disp)
 {
     int rm  = base & ENC_X86_64_REG_MASK;
@@ -132,7 +132,7 @@ void Enc_x86_64_EmitMem(int reg, Asm_x86_64_Reg base, int disp)
     }
 }
 
-// Emits `<opcode> %src, %dst` for a register-to-register operation.
+// Emit `<opcode> %src, %dst` for a register-to-register operation.
 void Enc_x86_64_EmitRR(int opcode, Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
 {
     Enc_x86_64_EmitRexW(Enc_x86_64_RegHigh(src), Enc_x86_64_RegHigh(dst));
@@ -140,7 +140,7 @@ void Enc_x86_64_EmitRR(int opcode, Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     Enc_x86_64_EmitModRR(src, dst);
 }
 
-// Emits a group-1 `<grp> $imm, %dst` with a 32-bit immediate.
+// Emit a group-1 `<grp> $imm, %dst` with a 32-bit immediate.
 void Enc_x86_64_EmitGrpImm(int grp, long imm, Asm_x86_64_Reg dst)
 {
     Enc_x86_64_EmitRexW(0, Enc_x86_64_RegHigh(dst));
@@ -149,7 +149,7 @@ void Enc_x86_64_EmitGrpImm(int grp, long imm, Asm_x86_64_Reg dst)
     Enc_x86_64_Emit32((unsigned int) imm);
 }
 
-// Emits `mov $imm, %dst` into a 64-bit register.
+// Emit `mov $imm, %dst` into a 64-bit register.
 void Enc_x86_64_EmitMovImm(long imm, Asm_x86_64_Reg dst)
 {
     if (imm >= INT32_MIN && imm <= INT32_MAX) {
@@ -164,7 +164,7 @@ void Enc_x86_64_EmitMovImm(long imm, Asm_x86_64_Reg dst)
     }
 }
 
-// Emits a REX prefix when the operand width or the registers chosen require one.
+// Emit a REX prefix when the operand width or the registers chosen require one.
 void Enc_x86_64_EmitRex(Asm_x86_64_Width width, Asm_x86_64_Reg reg, Asm_x86_64_Reg rm)
 {
     int bits = (width == ASM_X86_64_WIDTH_64 ? ENC_X86_64_REX_W : 0)
@@ -179,7 +179,7 @@ void Enc_x86_64_EmitRex(Asm_x86_64_Width width, Asm_x86_64_Reg reg, Asm_x86_64_R
     }
 }
 
-// Emits `mov $imm, %dst` into an 8-bit register.
+// Emit `mov $imm, %dst` into an 8-bit register.
 void Enc_x86_64_EmitMovImm8(long imm, Asm_x86_64_Reg dst)
 {
     if (dst >= ASM_X86_64_REG_R8) {
@@ -191,7 +191,7 @@ void Enc_x86_64_EmitMovImm8(long imm, Asm_x86_64_Reg dst)
     Enc_x86_64_Emit8(imm & 0xFF);
 }
 
-// Emits `<opcode> disp(%base), %reg` (or the reverse for a store) at width bits.
+// Emit `<opcode> disp(%base), %reg` (or the reverse for a store) at width bits.
 void Enc_x86_64_EmitMemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base, int disp, Asm_x86_64_Width width)
 {
     Enc_x86_64_EmitRex(width, reg, base);
@@ -199,7 +199,7 @@ void Enc_x86_64_EmitMemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base,
     Enc_x86_64_EmitMem(reg, base, disp);
 }
 
-// Emits a sign-extending `movs<w>q` from a register or from disp(%base).
+// Emit a sign-extending `movs<w>q` from a register or from disp(%base).
 void Enc_x86_64_EmitMovsx(const Asm_x86_64_Item *item)
 {
     Asm_x86_64_Reg dst = item->ai_dst.ao_reg;
@@ -219,7 +219,7 @@ void Enc_x86_64_EmitMovsx(const Asm_x86_64_Item *item)
     }
 }
 
-// Emits `lea label(%rip), %dst` with a rel32 fixup to label.
+// Emit `lea label(%rip), %dst` with a rel32 fixup to label.
 void Enc_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label)
 {
     Enc_x86_64_EmitRexW(Enc_x86_64_RegHigh(dst), 0);
@@ -229,7 +229,7 @@ void Enc_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label)
     Enc_x86_64_Emit32(0);
 }
 
-// Emits a group-3 unary instruction `<grp> %reg`.
+// Emit a group-3 unary instruction `<grp> %reg`.
 void Enc_x86_64_EmitGrpUnary(int grp, Asm_x86_64_Reg reg)
 {
     Enc_x86_64_EmitRexW(0, Enc_x86_64_RegHigh(reg));
@@ -237,7 +237,7 @@ void Enc_x86_64_EmitGrpUnary(int grp, Asm_x86_64_Reg reg)
     Enc_x86_64_EmitModRR(grp, reg);
 }
 
-// Emits a `setcc %reg` byte-setting instruction.
+// Emit a `setcc %reg` byte-setting instruction.
 void Enc_x86_64_EmitSetcc(int opcode, Asm_x86_64_Reg reg)
 {
     if (reg >= ASM_X86_64_REG_R8) {
@@ -250,7 +250,7 @@ void Enc_x86_64_EmitSetcc(int opcode, Asm_x86_64_Reg reg)
     Enc_x86_64_EmitModRR(0, reg);
 }
 
-// Emits a rel32 control-transfer instruction with a fixup to its target.
+// Emit a rel32 control-transfer instruction with a fixup to its target.
 void Enc_x86_64_EmitBranch(const Asm_x86_64_Item *item)
 {
     switch (item->ai_op) {
@@ -279,7 +279,7 @@ void Enc_x86_64_EmitBranch(const Asm_x86_64_Item *item)
     Enc_x86_64_Emit32(0);
 }
 
-// Emits a `mov` in whichever of its forms the operands select.
+// Emit a `mov` in whichever of its forms the operands select.
 void Enc_x86_64_EmitMov(const Asm_x86_64_Item *item)
 {
     Asm_x86_64_Reg dst = item->ai_dst.ao_reg;
@@ -311,7 +311,7 @@ void Enc_x86_64_EmitMov(const Asm_x86_64_Item *item)
     }
 }
 
-// Encodes one instruction item into the current section.
+// Encode one instruction item into the current section.
 void Enc_x86_64_EmitInstr(const Asm_x86_64_Item *item)
 {
     Asm_x86_64_Reg dst = item->ai_dst.ao_reg;
@@ -426,13 +426,13 @@ int Enc_x86_64_IsGlobl(const char *name)
     return 0;
 }
 
-// Switches the current section to the named one, creating it on first use.
+// Switch the current section to the named one, creating it on first use.
 void Enc_x86_64_SelectSection(const char *name, uint32_t type, uint64_t flags)
 {
     Enc_x86_64_Cur = Elf_SectionGet(Enc_x86_64_Out, name, type, flags);
 }
 
-// Creates a symbol for every label, then an undefined symbol for each unresolved target.
+// Create a symbol for every label, then an undefined symbol for each unresolved target.
 void Enc_x86_64_BuildSymbols(void)
 {
     for (size_t i = 0; i < Enc_x86_64_NumLabels; i++) {
@@ -454,7 +454,7 @@ void Enc_x86_64_BuildSymbols(void)
     }
 }
 
-// Turns each collected fixup into a relocation against its resolved symbol.
+// Turn each collected fixup into a relocation against its resolved symbol.
 void Enc_x86_64_BuildRelocs(void)
 {
     for (size_t i = 0; i < Enc_x86_64_NumFixes; i++) {
@@ -464,7 +464,7 @@ void Enc_x86_64_BuildRelocs(void)
     }
 }
 
-// Discards any previous object and starts a fresh one.
+// Discard any previous object and start a fresh one.
 void Enc_x86_64_Reset(void)
 {
     if (Enc_x86_64_Out) {
@@ -477,7 +477,7 @@ void Enc_x86_64_Reset(void)
     Enc_x86_64_NumFixes  = 0;
 }
 
-// Encodes the instruction list into a fresh relocatable object.
+// Encode the instruction list into a fresh relocatable object.
 void Enc_x86_64_BuildObject(void)
 {
     Enc_x86_64_Reset();
@@ -510,13 +510,13 @@ void Enc_x86_64_BuildObject(void)
     Enc_x86_64_BuildRelocs();
 }
 
-// Returns the object the last Enc_x86_64_BuildObject() encoded.
+// Return the object the last Enc_x86_64_BuildObject() encoded.
 Elf *Enc_x86_64_GetObject(void)
 {
     return Enc_x86_64_Out;
 }
 
-// Writes the encoded object to out, returning nonzero on failure.
+// Write the encoded object to out, returning nonzero on failure.
 int Enc_x86_64_Write(FILE *out)
 {
     return Elf_WriteFile(Enc_x86_64_Out, out);

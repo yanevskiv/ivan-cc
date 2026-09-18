@@ -4,7 +4,7 @@
 #include "util/elf.h"
 #include "util/str.h"
 
-// Initializes an empty byte buffer.
+// Initialize an empty byte buffer.
 void Elf_BufInit(Elf_Buf *buf)
 {
     buf->eb_data = NULL;
@@ -12,7 +12,7 @@ void Elf_BufInit(Elf_Buf *buf)
     buf->eb_cap  = 0;
 }
 
-// Frees a buffer's storage and clears it.
+// Free a buffer's storage and clear it.
 void Elf_BufFree(Elf_Buf *buf)
 {
     free(buf->eb_data);
@@ -21,7 +21,7 @@ void Elf_BufFree(Elf_Buf *buf)
     buf->eb_cap  = 0;
 }
 
-// Grows a buffer so it can hold at least n more bytes.
+// Grow a buffer so it can hold at least n more bytes.
 void Elf_BufReserve(Elf_Buf *buf, size_t n)
 {
     if (buf->eb_len + n <= buf->eb_cap) {
@@ -35,13 +35,13 @@ void Elf_BufReserve(Elf_Buf *buf, size_t n)
     buf->eb_cap  = cap;
 }
 
-// Returns a pointer to byte off within a buffer, for in-place patching.
+// Return a pointer to byte off within a buffer, for in-place patching.
 void *Elf_BufAt(Elf_Buf *buf, size_t off)
 {
     return buf->eb_data + off;
 }
 
-// Appends one byte, returning the offset it began at.
+// Append one byte, returning the offset it began at.
 size_t Elf_BufByte(Elf_Buf *buf, uint8_t value)
 {
     size_t off = buf->eb_len;
@@ -50,7 +50,7 @@ size_t Elf_BufByte(Elf_Buf *buf, uint8_t value)
     return off;
 }
 
-// Appends n raw bytes, returning the offset they began at.
+// Append n raw bytes, returning the offset they began at.
 size_t Elf_BufData(Elf_Buf *buf, const void *data, size_t n)
 {
     size_t off = buf->eb_len;
@@ -60,14 +60,14 @@ size_t Elf_BufData(Elf_Buf *buf, const void *data, size_t n)
     return off;
 }
 
-// Appends a little-endian 16-bit value, returning its offset.
+// Append a little-endian 16-bit value, returning its offset.
 size_t Elf_BufU16(Elf_Buf *buf, uint16_t value)
 {
     uint8_t bytes[2] = { value & 0xFF, (value >> 8) & 0xFF };
     return Elf_BufData(buf, bytes, 2);
 }
 
-// Appends a little-endian 32-bit value, returning its offset.
+// Append a little-endian 32-bit value, returning its offset.
 size_t Elf_BufU32(Elf_Buf *buf, uint32_t value)
 {
     uint8_t bytes[4];
@@ -77,7 +77,7 @@ size_t Elf_BufU32(Elf_Buf *buf, uint32_t value)
     return Elf_BufData(buf, bytes, 4);
 }
 
-// Appends a little-endian 64-bit value, returning its offset.
+// Append a little-endian 64-bit value, returning its offset.
 size_t Elf_BufU64(Elf_Buf *buf, uint64_t value)
 {
     uint8_t bytes[8];
@@ -87,7 +87,7 @@ size_t Elf_BufU64(Elf_Buf *buf, uint64_t value)
     return Elf_BufData(buf, bytes, 8);
 }
 
-// Appends n zero bytes, returning the offset they began at.
+// Append n zero bytes, returning the offset they began at.
 size_t Elf_BufZero(Elf_Buf *buf, size_t n)
 {
     size_t off = buf->eb_len;
@@ -97,7 +97,7 @@ size_t Elf_BufZero(Elf_Buf *buf, size_t n)
     return off;
 }
 
-// Pads the buffer with zeros up to a multiple of align, returning new length.
+// Pad the buffer with zeros up to a multiple of align, returning new length.
 size_t Elf_BufAlign(Elf_Buf *buf, size_t align)
 {
     if (align > 1) {
@@ -108,7 +108,7 @@ size_t Elf_BufAlign(Elf_Buf *buf, size_t align)
     return buf->eb_len;
 }
 
-// Interns a name into the object's string pool, returning an owned copy.
+// Intern a name into the object's string pool, returning an owned copy.
 const char *Elf_Intern(Elf *elf, const char *name)
 {
     if (! name) {
@@ -124,7 +124,7 @@ const char *Elf_Intern(Elf *elf, const char *name)
     return copy;
 }
 
-// Creates an empty ELF object of the given type and machine.
+// Create an empty ELF object of the given type and machine.
 Elf *Elf_New(uint16_t type, uint16_t machine)
 {
     Elf *elf = calloc(1, sizeof(*elf));
@@ -133,7 +133,7 @@ Elf *Elf_New(uint16_t type, uint16_t machine)
     return elf;
 }
 
-// Frees an ELF object and everything it owns.
+// Free an ELF object and everything it owns.
 void Elf_Free(Elf *elf)
 {
     if (! elf) {
@@ -156,31 +156,31 @@ void Elf_Free(Elf *elf)
     free(elf);
 }
 
-// Sets the entry virtual address (ET_EXEC).
+// Set the entry virtual address (ET_EXEC).
 void Elf_SetEntry(Elf *elf, uint64_t vaddr)
 {
     elf->elf_entry = vaddr;
 }
 
-// Sets the object type (ELF_ET_*).
+// Set the object type (ELF_ET_*).
 void Elf_SetType(Elf *elf, uint16_t type)
 {
     elf->elf_type = type;
 }
 
-// Returns the object type (ELF_ET_*).
+// Return the object type (ELF_ET_*).
 uint16_t Elf_GetType(const Elf *elf)
 {
     return elf->elf_type;
 }
 
-// Returns the last error message recorded on the object, or NULL.
+// Return the last error message recorded on the object, or NULL.
 const char *Elf_Error(const Elf *elf)
 {
     return elf->elf_err;
 }
 
-// Appends a new section and returns it.
+// Append a new section and return it.
 Elf_Sec *Elf_SectionAdd(Elf *elf, const char *name, uint32_t type, uint64_t flags)
 {
     Elf_Sec *sec = calloc(1, sizeof(*sec));
@@ -198,7 +198,7 @@ Elf_Sec *Elf_SectionAdd(Elf *elf, const char *name, uint32_t type, uint64_t flag
     return sec;
 }
 
-// Finds a section by name, or returns NULL.
+// Find a section by name, or return NULL.
 Elf_Sec *Elf_SectionFind(Elf *elf, const char *name)
 {
     for (size_t i = 0; i < elf->elf_nsecs; i++) {
@@ -209,7 +209,7 @@ Elf_Sec *Elf_SectionFind(Elf *elf, const char *name)
     return NULL;
 }
 
-// Finds a section by name, creating it with the given type and flags if absent.
+// Find a section by name, creating it with the given type and flags if absent.
 Elf_Sec *Elf_SectionGet(Elf *elf, const char *name, uint32_t type, uint64_t flags)
 {
     Elf_Sec *sec = Elf_SectionFind(elf, name);
@@ -219,31 +219,31 @@ Elf_Sec *Elf_SectionGet(Elf *elf, const char *name, uint32_t type, uint64_t flag
     return Elf_SectionAdd(elf, name, type, flags);
 }
 
-// Returns the number of sections.
+// Return the number of sections.
 size_t Elf_SectionCount(const Elf *elf)
 {
     return elf->elf_nsecs;
 }
 
-// Returns section i.
+// Return section i.
 Elf_Sec *Elf_SectionAt(const Elf *elf, size_t i)
 {
     return elf->elf_secs[i];
 }
 
-// Returns the byte buffer a section's contents are appended to.
+// Return the byte buffer a section's contents are appended to.
 Elf_Buf *Elf_SectionData(Elf_Sec *sec)
 {
     return &sec->sec_data;
 }
 
-// Places a section at a load address.
+// Place a section at a load address.
 void Elf_SectionAddr(Elf_Sec *sec, uint64_t addr)
 {
     sec->sec_addr = addr;
 }
 
-// Appends a symbol and returns it.  sec == NULL records an undefined reference.
+// Append a symbol and return it.  sec == NULL records an undefined reference.
 Elf_Sym *Elf_SymbolAdd(Elf *elf, const char *name, Elf_Sec *sec,
                        uint64_t value, uint8_t bind, uint8_t type)
 {
@@ -262,7 +262,7 @@ Elf_Sym *Elf_SymbolAdd(Elf *elf, const char *name, Elf_Sec *sec,
     return sym;
 }
 
-// Finds a symbol by name, or returns NULL.
+// Find a symbol by name, or return NULL.
 Elf_Sym *Elf_SymbolFind(Elf *elf, const char *name)
 {
     for (size_t i = 0; i < elf->elf_nsyms; i++) {
@@ -273,19 +273,19 @@ Elf_Sym *Elf_SymbolFind(Elf *elf, const char *name)
     return NULL;
 }
 
-// Returns the number of symbols.
+// Return the number of symbols.
 size_t Elf_SymbolCount(const Elf *elf)
 {
     return elf->elf_nsyms;
 }
 
-// Returns symbol i.
+// Return symbol i.
 Elf_Sym *Elf_SymbolAt(const Elf *elf, size_t i)
 {
     return elf->elf_syms[i];
 }
 
-// Appends a relocation to the section it patches and returns it.
+// Append a relocation to the section it patches and return it.
 Elf_Rela *Elf_RelaAdd(Elf_Sec *target, uint64_t offset, Elf_Sym *sym,
                       uint32_t type, int64_t addend)
 {
@@ -301,19 +301,19 @@ Elf_Rela *Elf_RelaAdd(Elf_Sec *target, uint64_t offset, Elf_Sym *sym,
     return rel;
 }
 
-// Returns the number of relocations patching a section.
+// Return the number of relocations patching a section.
 size_t Elf_RelaCount(const Elf_Sec *target)
 {
     return target->sec_nrelas;
 }
 
-// Returns relocation i of a section.
+// Return relocation i of a section.
 Elf_Rela *Elf_RelaAt(const Elf_Sec *target, size_t i)
 {
     return (Elf_Rela *) &target->sec_relas[i];
 }
 
-// Appends name and a NUL to a string table, returning name's start offset.
+// Append name and a NUL to a string table, returning name's start offset.
 uint32_t Elf_WriteStr(Elf_Buf *strtab, const char *name)
 {
     uint32_t off = (uint32_t) strtab->eb_len;
@@ -332,7 +332,7 @@ uint32_t Elf_SectionIndex(const Elf *elf, const Elf_Sec *sec, const uint32_t *se
     return 0;
 }
 
-// Builds the .symtab and .strtab bodies, locals before globals, recording indices in slot[].
+// Build the .symtab and .strtab bodies, locals before globals, recording indices in slot[].
 void Elf_WriteSymtab(const Elf *elf, const uint32_t *secidx, Elf_Buf *symtab,
                             Elf_Buf *strtab, uint32_t *slot, uint32_t *first_global)
 {
@@ -371,7 +371,7 @@ void Elf_WriteSymtab(const Elf *elf, const uint32_t *secidx, Elf_Buf *symtab,
     }
 }
 
-// Builds one .rela.* body from a section's relocations, using final indices.
+// Build one .rela.* body from a section's relocations, using final indices.
 void Elf_WriteRelas(const Elf_Sec *sec, const uint32_t *slot,
                            const Elf *elf, Elf_Buf *out)
 {
@@ -393,7 +393,7 @@ void Elf_WriteRelas(const Elf_Sec *sec, const uint32_t *slot,
     }
 }
 
-// Serializes a relocatable object (ET_REL): sections, .symtab/.strtab, .rela.* and .shstrtab.
+// Serialize a relocatable object (ET_REL): sections, .symtab/.strtab, .rela.* and .shstrtab.
 int Elf_WriteRel(const Elf *elf, FILE *out)
 {
     size_t nuser = elf->elf_nsecs;
@@ -565,7 +565,7 @@ uint64_t Elf_PlaceOffset(uint64_t pos, uint64_t vaddr)
     return pos + (vaddr - pos) % ELF_PAGE;
 }
 
-// Serializes a static executable (ET_EXEC): one R+X PT_LOAD per placed section.
+// Serialize a static executable (ET_EXEC): one R+X PT_LOAD per placed section.
 int Elf_WriteExec(const Elf *elf, FILE *out)
 {
     // Phase: select the loadable sections.
@@ -626,7 +626,7 @@ int Elf_WriteExec(const Elf *elf, FILE *out)
     return 0;
 }
 
-// Serializes an object to an open stream, returning 0 on success or -1.
+// Serialize an object to an open stream, returning 0 on success or -1.
 int Elf_WriteFile(const Elf *elf, FILE *out)
 {
     if (elf->elf_type == ELF_ET_EXEC) {
@@ -635,7 +635,7 @@ int Elf_WriteFile(const Elf *elf, FILE *out)
     return Elf_WriteRel(elf, out);
 }
 
-// Serializes an object to a file, returning 0 on success or -1 on error.
+// Serialize an object to a file, returning 0 on success or -1 on error.
 int Elf_Write(const Elf *elf, const char *path)
 {
     FILE *out = fopen(path, "wb");
@@ -647,7 +647,7 @@ int Elf_Write(const Elf *elf, const char *path)
     return rc;
 }
 
-// Validates the file header and returns it, or NULL if it is not an ELF object.
+// Validate the file header and return it, or NULL if it is not an ELF object.
 const Elf64_Ehdr *Elf_ReadEhdr(const uint8_t *data, size_t n)
 {
     if (n < sizeof(Elf64_Ehdr)) {
@@ -661,7 +661,7 @@ const Elf64_Ehdr *Elf_ReadEhdr(const uint8_t *data, size_t n)
     return eh;
 }
 
-// Parses ELF bytes into a new object, or returns NULL on error.
+// Parse ELF bytes into a new object, or return NULL on error.
 Elf *Elf_ReadMem(const void *buf, size_t n)
 {
     const uint8_t    *data = buf;
@@ -738,7 +738,7 @@ Elf *Elf_ReadMem(const void *buf, size_t n)
     return elf;
 }
 
-// Parses an ELF file into a new object, or returns NULL on error.
+// Parse an ELF file into a new object, or return NULL on error.
 Elf *Elf_Read(const char *path)
 {
     FILE *file = fopen(path, "rb");

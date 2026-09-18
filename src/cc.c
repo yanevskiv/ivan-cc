@@ -40,7 +40,7 @@ int yyparse(void);
 // Runtime objects the default (linked) output is always merged with.
 static const char *const Cc_RuntimeNames[] = { "crt0.o", "libc.o" };
 
-// Show usage information and exits.
+// Show usage information and exit.
 static void Cc_ShowUsage(const char *prog)
 {
     fprintf(stderr,
@@ -54,7 +54,7 @@ static void Cc_ShowUsage(const char *prog)
     exit(1);
 }
 
-// Returns the directory holding this executable, or NULL if it cannot be found.
+// Return the directory holding this executable, or NULL if it cannot be found.
 static char *Cc_GetExeDir(void)
 {
     char buf[PATH_MAX];
@@ -72,7 +72,7 @@ static char *Cc_GetExeDir(void)
     return strdup(buf);
 }
 
-// Returns the directory to read the runtime objects from, honouring -B.
+// Return the directory to read the runtime objects from, honouring -B.
 static char *Cc_GetRuntimeDir(const char *prefix)
 {
     if (prefix) {
@@ -88,14 +88,14 @@ static char *Cc_GetRuntimeDir(const char *prefix)
     return dir;
 }
 
-// Writes the program as AT&T assembly text.
+// Write the program as AT&T assembly text.
 static void Cc_x86_64_WriteText(FILE *out, Ast_Func *prog)
 {
     Gen_x86_64_BuildProgram(prog);
     Txt_x86_64_Att_Write(out);
 }
 
-// Writes the program as a relocatable object, references left undefined.
+// Write the program as a relocatable object, references left undefined.
 static void Cc_x86_64_WriteObject(FILE *out, Ast_Func *prog)
 {
     Gen_x86_64_BuildProgram(prog);
@@ -103,7 +103,7 @@ static void Cc_x86_64_WriteObject(FILE *out, Ast_Func *prog)
     Enc_x86_64_Write(out);
 }
 
-// Writes the program linked against the runtime as a static executable.
+// Write the program linked against the runtime as a static executable.
 static void Cc_x86_64_WriteExec(FILE *out, Ast_Func *prog, const char *prefix)
 {
     Gen_x86_64_BuildProgram(prog);

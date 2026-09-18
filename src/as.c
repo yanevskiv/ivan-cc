@@ -9,7 +9,7 @@
 #include "arch/x86_64/enc.h"
 #include "arch/x86_64/txt.h"
 
-// Shows usage information and exits.
+// Show usage information and exit.
 static void As_Usage(const char *prog)
 {
     fprintf(stderr,
@@ -19,7 +19,7 @@ static void As_Usage(const char *prog)
     exit(1);
 }
 
-// Reads AT&T assembly from input and writes a relocatable object to output.
+// Read AT&T assembly from input and write a relocatable object to output.
 static void As_Assemble(const char *input, const char *output)
 {
     char *text = File_GetContent(input, NULL);

@@ -23,7 +23,7 @@
 int  yylex(void);
 void yyerror(const char *s);
 
-/* Gives a rule the line of its first token, or of the preceding one if empty. */
+/* Give a rule the line of its first token, or of the preceding one if empty. */
 #define YYLLOC_DEFAULT(cur, rhs, n)  ((cur) = (n) ? YYRHSLOC(rhs, 1) : YYRHSLOC(rhs, 0))
 
 /* State for the function definition currently being parsed. */
@@ -36,7 +36,7 @@ static int       Par_CurNumParams;
 static Ast_Func *Par_ProgHead;
 static Ast_Func *Par_ProgTail;
 
-/* Appends a parameter to the function currently being parsed. */
+/* Append a parameter to the function currently being parsed. */
 static void Par_AddParam(Ast_Var *v)
 {
     v->av_param_next = NULL;
@@ -49,7 +49,7 @@ static void Par_AddParam(Ast_Var *v)
     Par_CurNumParams++;
 }
 
-/* Wraps base in the array dimensions listed outermost first. */
+/* Wrap base in the array dimensions listed outermost first. */
 static Ast_Type *Par_ArrayType(Ast_Type *base, Ast_Node *dims)
 {
     if (! dims) {
@@ -58,7 +58,7 @@ static Ast_Type *Par_ArrayType(Ast_Type *base, Ast_Node *dims)
     return Ast_NewArray(Par_ArrayType(base, dims->an_next), (int) dims->an_val);
 }
 
-/* Appends a finished function to the program. */
+/* Append a finished function to the program. */
 static void Par_AddFunction(Ast_Func *fn)
 {
     fn->af_next = NULL;

@@ -21,7 +21,7 @@ static int Ast_NumStrings;
 // Locals of the function currently being parsed.
 static Ast_Var *Ast_Locals;
 
-// Builds the pointer type that points at base.
+// Build the pointer type that points at base.
 Ast_Type *Ast_NewPointer(Ast_Type *base)
 {
     Ast_Type *type = calloc(1, sizeof(Ast_Type));
@@ -32,7 +32,7 @@ Ast_Type *Ast_NewPointer(Ast_Type *base)
     return type;
 }
 
-// Builds the type of an array of len elements of base.
+// Build the type of an array of len elements of base.
 Ast_Type *Ast_NewArray(Ast_Type *base, int len)
 {
     Ast_Type *type = calloc(1, sizeof(Ast_Type));
@@ -44,7 +44,7 @@ Ast_Type *Ast_NewArray(Ast_Type *base, int len)
     return type;
 }
 
-// Allocates a zeroed node of the given kind.
+// Allocate a zeroed node of the given kind.
 Ast_Node *Ast_NewNode(Ast_NodeKind kind, int line)
 {
     Ast_Node *node = calloc(1, sizeof(Ast_Node));
@@ -53,7 +53,7 @@ Ast_Node *Ast_NewNode(Ast_NodeKind kind, int line)
     return node;
 }
 
-// Builds a binary-operator node with the given operands.
+// Build a binary-operator node with the given operands.
 Ast_Node *Ast_NewBinary(Ast_NodeKind kind, Ast_Node *lhs, Ast_Node *rhs, int line)
 {
     Ast_Node *node = Ast_NewNode(kind, line);
@@ -62,7 +62,7 @@ Ast_Node *Ast_NewBinary(Ast_NodeKind kind, Ast_Node *lhs, Ast_Node *rhs, int lin
     return node;
 }
 
-// Builds a unary-operator node with the given operand.
+// Build a unary-operator node with the given operand.
 Ast_Node *Ast_NewUnary(Ast_NodeKind kind, Ast_Node *lhs, int line)
 {
     Ast_Node *node = Ast_NewNode(kind, line);
@@ -70,7 +70,7 @@ Ast_Node *Ast_NewUnary(Ast_NodeKind kind, Ast_Node *lhs, int line)
     return node;
 }
 
-// Builds an integer-literal node.
+// Build an integer-literal node.
 Ast_Node *Ast_NewNum(long val, int line)
 {
     Ast_Node *node = Ast_NewNode(AST_NODE_KIND_NUM, line);
@@ -78,7 +78,7 @@ Ast_Node *Ast_NewNum(long val, int line)
     return node;
 }
 
-// Builds a node that references a local variable.
+// Build a node that references a local variable.
 Ast_Node *Ast_NewVarNode(Ast_Var *var, int line)
 {
     Ast_Node *node = Ast_NewNode(AST_NODE_KIND_VAR, line);
@@ -86,13 +86,13 @@ Ast_Node *Ast_NewVarNode(Ast_Var *var, int line)
     return node;
 }
 
-// Starts a fresh variable scope for a new function.
+// Start a fresh variable scope for a new function.
 void Ast_BeginScope(void)
 {
     Ast_Locals = NULL;
 }
 
-// Looks up a variable by name in the current scope, or NULL.
+// Look up a variable by name in the current scope, or NULL.
 Ast_Var *Ast_FindVar(const char *name)
 {
     for (Ast_Var *var = Ast_Locals; var; var = var->av_next) {
@@ -103,7 +103,7 @@ Ast_Var *Ast_FindVar(const char *name)
     return NULL;
 }
 
-// Declares a variable in the current scope, reusing any existing slot.
+// Declare a variable in the current scope, reusing any existing slot.
 Ast_Var *Ast_DeclareVar(const char *name, Ast_Type *type, int line)
 {
     Ast_Var *var = Ast_FindVar(name);
@@ -119,13 +119,13 @@ Ast_Var *Ast_DeclareVar(const char *name, Ast_Type *type, int line)
     return var;
 }
 
-// Returns the list of locals declared in the current scope.
+// Return the list of locals declared in the current scope.
 Ast_Var *Ast_CurrentLocals(void)
 {
     return Ast_Locals;
 }
 
-// Interns a decoded string literal of len bytes and returns its table slot.
+// Intern a decoded string literal of len bytes and return its table slot.
 int Ast_AddString(char *str, int len)
 {
     if (Ast_NumStrings >= MAX_STRINGS) {
@@ -136,13 +136,13 @@ int Ast_AddString(char *str, int len)
     return Ast_NumStrings++;
 }
 
-// Returns the number of interned string literals.
+// Return the number of interned string literals.
 int Ast_StringCount(void)
 {
     return Ast_NumStrings;
 }
 
-// Returns the interned string literal in the given slot.
+// Return the interned string literal in the given slot.
 Ast_Str *Ast_StringAt(int idx)
 {
     return &Ast_Strings[idx];

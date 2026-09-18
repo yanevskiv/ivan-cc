@@ -14,7 +14,7 @@
 // Default output name when no -o is given.
 #define LD_DEFAULT_OUTPUT "a.out"
 
-// Shows usage information and exits.
+// Show usage information and exit.
 static void Ld_Usage(const char *prog)
 {
     fprintf(stderr,
@@ -28,7 +28,7 @@ static void Ld_Usage(const char *prog)
     exit(1);
 }
 
-// Maps a -place section name to its ELF section: text -> .text, data/rodata ->
+// Map a -place section name to its ELF section: text -> .text, data/rodata ->
 // .rodata, anything else is taken as a literal section name.
 static char *Ld_PlaceName(const char *spec, int len)
 {
@@ -44,7 +44,7 @@ static char *Ld_PlaceName(const char *spec, int len)
     return name;
 }
 
-// Parses a -place=SEC@ADDR argument into opts, or aborts on a malformed value.
+// Parse a -place=SEC@ADDR argument into opts, or abort on a malformed value.
 static void Ld_ParsePlace(const char *spec, Link_Options *opts)
 {
     const char *at = strchr(spec, '@');

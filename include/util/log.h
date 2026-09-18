@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Prints a diagnostic and exits; shared by the lexer, parser and back end.
+// Print a diagnostic and exit; shared by the lexer, parser and back end.
 #define Log_ShowError(...)              \
     do {                                \
         fprintf(stderr, "cc: error: "); \
@@ -13,7 +13,7 @@
         exit(1);                        \
     } while (0)
 
-// Prints a diagnostic naming the source line it came from and exits.
+// Print a diagnostic naming the source line it came from and exit.
 #define Log_ShowErrorAt(line, ...)                       \
     do {                                                 \
         fprintf(stderr, "cc: error: line %d: ", (line)); \
@@ -22,7 +22,7 @@
         exit(1);                                         \
     } while (0)
 
-// Prints a warning diagnostic and continues; shared by the lexer, parser and back end.
+// Print a warning diagnostic and continue; shared by the lexer, parser and back end.
 #define Log_ShowWarning(...)              \
     do {                                  \
         fprintf(stderr, "cc: warning: "); \

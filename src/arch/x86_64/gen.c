@@ -34,39 +34,39 @@ static const Asm_x86_64_Reg Gen_x86_64_ArgReg[6] = {
     ASM_X86_64_REG_R9
 };
 
-// Returns the next unique label number.
+// Return the next unique label number.
 int Gen_x86_64_Count(void)
 {
     return Gen_x86_64_LabelId++;
 }
 
-// Pushes %rax onto the stack and tracks the depth.
+// Push %rax onto the stack and track the depth.
 void Gen_x86_64_EmitPush(void)
 {
     Asm_x86_64_EmitPush(ASM_X86_64_REG_RAX);
     Gen_x86_64_Depth++;
 }
 
-// Pops the top of the stack into reg and tracks the depth.
+// Pop the top of the stack into reg and track the depth.
 void Gen_x86_64_EmitPop(Asm_x86_64_Reg reg)
 {
     Asm_x86_64_EmitPop(reg);
     Gen_x86_64_Depth--;
 }
 
-// Rounds n up to the nearest multiple of align.
+// Round n up to the nearest multiple of align.
 int Gen_x86_64_AlignTo(int n, int align)
 {
     return (n + align - 1) / align * align;
 }
 
-// Returns the operand width in bits used to load or store a value of type.
+// Return the operand width in bits used to load or store a value of type.
 Asm_x86_64_Width Gen_x86_64_TypeWidth(const Ast_Type *type)
 {
     return type->at_size * ASM_X86_64_BITS_PER_BYTE;
 }
 
-// Computes the address of an lvalue into %rax.
+// Compute the address of an lvalue into %rax.
 void Gen_x86_64_EmitAddr(Ast_Node *node)
 {
     switch (node->an_kind) {
@@ -82,7 +82,7 @@ void Gen_x86_64_EmitAddr(Ast_Node *node)
     }
 }
 
-// Loads the value at the address in %rax; an array's value is that address.
+// Load the value at the address in %rax; an array's value is that address.
 void Gen_x86_64_EmitLoad(const Ast_Type *type)
 {
     if (type->at_kind == AST_TYPE_KIND_ARRAY) {
@@ -91,7 +91,7 @@ void Gen_x86_64_EmitLoad(const Ast_Type *type)
     Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RAX, 0, ASM_X86_64_REG_RAX, Gen_x86_64_TypeWidth(type));
 }
 
-// Narrows the value in %rax to type, sign-extending it back to 64 bits.
+// Narrow the value in %rax to type, sign-extending it back to 64 bits.
 void Gen_x86_64_EmitCast(const Ast_Type *type)
 {
     switch (type->at_kind) {
@@ -109,7 +109,7 @@ void Gen_x86_64_EmitCast(const Ast_Type *type)
     }
 }
 
-// Counts the arguments in a call's argument list.
+// Count the arguments in a call's argument list.
 int Gen_x86_64_CallCountArgs(Ast_Node *args)
 {
     int nArgs = 0;
@@ -119,7 +119,7 @@ int Gen_x86_64_CallCountArgs(Ast_Node *args)
     return nArgs;
 }
 
-// Evaluates call arguments and pushes them so the first lands on top.
+// Evaluate call arguments and push them so the first lands on top.
 void Gen_x86_64_CallPushArgs(Ast_Node *arg)
 {
     if (! arg) {
@@ -130,7 +130,7 @@ void Gen_x86_64_CallPushArgs(Ast_Node *arg)
     Gen_x86_64_EmitPush();
 }
 
-// Pops the first nReg pushed arguments into the ABI argument registers.
+// Pop the first nReg pushed arguments into the ABI argument registers.
 void Gen_x86_64_CallPopArgs(int nReg)
 {
     for (int i = 0; i < nReg; i++) {
@@ -138,7 +138,7 @@ void Gen_x86_64_CallPopArgs(int nReg)
     }
 }
 
-// Emits code for an expression, leaving its result in %rax.
+// Emit code for an expression, leaving its result in %rax.
 void Gen_x86_64_EmitExpr(Ast_Node *node)
 {
     switch (node->an_kind) {
@@ -280,7 +280,7 @@ void Gen_x86_64_EmitExpr(Ast_Node *node)
     }
 }
 
-// Emits code for a statement.
+// Emit code for a statement.
 void Gen_x86_64_EmitStmt(Ast_Node *node)
 {
     switch (node->an_kind) {
@@ -340,7 +340,7 @@ void Gen_x86_64_EmitStmt(Ast_Node *node)
     }
 }
 
-// Assigns each local a stack slot and records the frame size.
+// Assign each local a stack slot and record the frame size.
 void Gen_x86_64_AssignLvarOffsets(Ast_Func *func)
 {
     int offset = 0;
@@ -352,7 +352,7 @@ void Gen_x86_64_AssignLvarOffsets(Ast_Func *func)
     func->af_stack_size = Gen_x86_64_AlignTo(offset, STACK_ALIGN);
 }
 
-// Emits the .rodata section holding all string literals.
+// Emit the .rodata section holding all string literals.
 void Gen_x86_64_EmitDataSection(void)
 {
     int count = Ast_StringCount();
@@ -367,7 +367,7 @@ void Gen_x86_64_EmitDataSection(void)
     }
 }
 
-// Emits the prologue, body and epilogue for every function.
+// Emit the prologue, body and epilogue for every function.
 void Gen_x86_64_EmitFunctions(Ast_Func *prog)
 {
     for (Ast_Func *func = prog; func; func = func->af_next) {
@@ -409,14 +409,14 @@ void Gen_x86_64_EmitFunctions(Ast_Func *prog)
     }
 }
 
-// Emits the .text section.
+// Emit the .text section.
 void Gen_x86_64_EmitTextSection(Ast_Func *prog)
 {
     Asm_x86_64_EmitSection(".text", ELF_SHT_PROGBITS, ELF_SHF_ALLOC | ELF_SHF_EXECINSTR);
     Gen_x86_64_EmitFunctions(prog);
 }
 
-// Builds the instruction list for the whole program.
+// Build the instruction list for the whole program.
 void Gen_x86_64_BuildProgram(Ast_Func *prog)
 {
     Asm_x86_64_Reset();

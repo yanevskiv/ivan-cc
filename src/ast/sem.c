@@ -9,7 +9,7 @@ static Ast_Func *Sem_Prog;
 // The type of a string literal, built once and shared.
 static Ast_Type *Sem_TypeCharPtr;
 
-// Returns the function of that name defined in this program, or NULL.
+// Return the function of that name defined in this program, or NULL.
 Ast_Func *Sem_FindFunc(const char *name)
 {
     for (Ast_Func *func = Sem_Prog; func; func = func->af_next) {
@@ -20,7 +20,7 @@ Ast_Func *Sem_FindFunc(const char *name)
     return NULL;
 }
 
-// Returns the length of a node list.
+// Return the length of a node list.
 int Sem_CountNodes(Ast_Node *list)
 {
     int count = 0;
@@ -30,19 +30,19 @@ int Sem_CountNodes(Ast_Node *list)
     return count;
 }
 
-// Returns whether values of this type address memory: a pointer, or an array.
+// Return whether values of this type address memory: a pointer, or an array.
 int Sem_IsPointer(const Ast_Type *type)
 {
     return type->at_kind == AST_TYPE_KIND_PTR || type->at_kind == AST_TYPE_KIND_ARRAY;
 }
 
-// Returns whether a node names an object, so that it can be assigned or addressed.
+// Return whether a node names an object, so that it can be assigned or addressed.
 int Sem_IsLvalue(const Ast_Node *node)
 {
     return node->an_kind == AST_NODE_KIND_VAR || node->an_kind == AST_NODE_KIND_DEREF;
 }
 
-// Returns the type an expression of this type yields; an array yields a pointer.
+// Return the type an expression of this type yields; an array yields a pointer.
 Ast_Type *Sem_Decay(Ast_Type *type)
 {
     if (type->at_kind == AST_TYPE_KIND_ARRAY) {
@@ -51,7 +51,7 @@ Ast_Type *Sem_Decay(Ast_Type *type)
     return type;
 }
 
-// Checks a call against the callee's definition, if this program has one.
+// Check a call against the callee's definition, if this program has one.
 void Sem_CheckCall(Ast_Node *node)
 {
     Ast_Func *func = Sem_FindFunc(node->an_funcname);
@@ -64,7 +64,7 @@ void Sem_CheckCall(Ast_Node *node)
     }
 }
 
-// Wraps node in a multiplication by size, so it steps whole elements.
+// Wrap node in a multiplication by size, so it steps whole elements.
 Ast_Node *Sem_ScaleBy(Ast_Node *node, int size)
 {
     Ast_Node *num = Ast_NewNum(size, node->an_line);
@@ -75,7 +75,7 @@ Ast_Node *Sem_ScaleBy(Ast_Node *node, int size)
     return mul;
 }
 
-// Types + and -, scaling an integer operand against a pointer and reducing p - q.
+// Type + and -, scaling an integer operand against a pointer and reducing p - q.
 void Sem_Arith(Ast_Node *node)
 {
     Ast_Type *lhs = node->an_lhs->an_type;
@@ -116,7 +116,7 @@ void Sem_Arith(Ast_Node *node)
     node->an_type = Sem_Decay(lhs);
 }
 
-// Annotates a node and everything below it, depth first.
+// Annotate a node and everything below it, depth first.
 void Sem_Node(Ast_Node *node)
 {
     if (! node) {
@@ -217,7 +217,7 @@ void Sem_Node(Ast_Node *node)
     }
 }
 
-// Annotates every node with its type and rejects what the grammar cannot.
+// Annotate every node with its type and reject what the grammar cannot.
 void Sem_Analyze(Ast_Func *prog)
 {
     Sem_Prog = prog;

@@ -51,12 +51,12 @@
 // The undefined section index used by external references.
 #define ELF_SHN_UNDEF 0
 
-// Packs and unpacks the symbol binding/type nibbles of st_info.
+// Pack and unpack the symbol binding/type nibbles of st_info.
 #define ELF_ST_INFO(bind, type) (((bind) << 4) | ((type) & 0xF))
 #define ELF_ST_BIND(info) ((info) >> 4)
 #define ELF_ST_TYPE(info) ((info) & 0xF)
 
-// Packs and unpacks the symbol index and type of r_info.
+// Pack and unpack the symbol index and type of r_info.
 #define ELF_R_INFO(sym, type) (((uint64_t) (sym) << 32) | (uint32_t) (type))
 #define ELF_R_SYM(info)  ((uint32_t) ((info) >> 32))
 #define ELF_R_TYPE(info) ((uint32_t) ((info) & 0xFFFFFFFF))

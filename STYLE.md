@@ -72,6 +72,12 @@ What gets a comment:
   what it does (and, if not obvious from the signature, why it exists or
   what it assumes). One line normally suffices; wrap to a second only when
   genuinely necessary.
+- Write those in the imperative: `// Emit a REX prefix`, not `// Emits a
+  REX prefix`. Every verb in the sentence follows, including after `and`
+  or `or` — `// Show usage information and exit`. A verb with its own
+  subject keeps its own form (`// The section it patches`), and comments
+  that are noun phrases rather than sentences stay as they are
+  (`// True if name was declared`, `// Jumps, calls and returns`).
 - **Every macro, typedef, struct, and enum** gets one comment above it for
   the same reason. Struct fields and enum constants that aren't
   self-explanatory get a short trailing `// comment` instead of one above.

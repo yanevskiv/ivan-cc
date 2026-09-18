@@ -80,7 +80,7 @@ static const char *Txt_x86_64_OpName[] = {
     [ASM_X86_64_OP_SYSCALL] = "syscall"
 };
 
-// Writes one operand in AT&T syntax.
+// Write one operand in AT&T syntax.
 void Txt_x86_64_Att_WriteOperand(FILE *out, const Asm_x86_64_Operand *op)
 {
     switch (op->ao_kind) {
@@ -115,7 +115,7 @@ void Txt_x86_64_Att_WriteOperand(FILE *out, const Asm_x86_64_Operand *op)
     }
 }
 
-// Writes one instruction: mnemonic plus operands in AT&T order.
+// Write one instruction: mnemonic plus operands in AT&T order.
 void Txt_x86_64_Att_WriteInstr(FILE *out, const Asm_x86_64_Item *item)
 {
     if (item->ai_op == ASM_X86_64_OP_MOVSX) {
@@ -138,7 +138,7 @@ void Txt_x86_64_Att_WriteInstr(FILE *out, const Asm_x86_64_Item *item)
     fputc('\n', out);
 }
 
-// Walks the instruction list and writes AT&T-syntax assembly to out.
+// Walk the instruction list and write AT&T-syntax assembly to out.
 void Txt_x86_64_Att_Write(FILE *out)
 {
     for (Asm_x86_64_Item *item = Asm_x86_64_Items(); item; item = item->ai_next) {
@@ -171,7 +171,7 @@ void Txt_x86_64_Att_Write(FILE *out)
     }
 }
 
-// Returns the register index for an AT&T name like "rax"/"al", or -1; sets *width.
+// Return the register index for an AT&T name like "rax"/"al", or -1; set *width.
 int Txt_x86_64_RegByName(const char *name, Asm_x86_64_Width *width)
 {
     for (int i = 0; i < 16; i++) {
@@ -191,7 +191,7 @@ int Txt_x86_64_RegByName(const char *name, Asm_x86_64_Width *width)
     return -1;
 }
 
-// Returns the opcode for a mnemonic, or -1 if it names no instruction we encode.
+// Return the opcode for a mnemonic, or -1 if it names no instruction we encode.
 int Txt_x86_64_OpByName(const char *name)
 {
     int count = (int) (sizeof(Txt_x86_64_OpName) / sizeof(Txt_x86_64_OpName[0]));
@@ -203,7 +203,7 @@ int Txt_x86_64_OpByName(const char *name)
     return -1;
 }
 
-// Parses one AT&T operand into op; returns nonzero on success.
+// Parse one AT&T operand into op; return nonzero on success.
 int Txt_x86_64_Att_ParseOperand(const char *text, Asm_x86_64_Operand *op)
 {
     char *g[3];
@@ -249,7 +249,7 @@ int Txt_x86_64_Att_ParseOperand(const char *text, Asm_x86_64_Operand *op)
     return 0;
 }
 
-// Emits a .byte/.word/.long/.quad list as width-byte little-endian values.
+// Emit a .byte/.word/.long/.quad list as width-byte little-endian values.
 void Txt_x86_64_Att_EmitInts(const char *args, int width)
 {
     Str_List parts = Str_Split(args, ",");
@@ -268,7 +268,7 @@ void Txt_x86_64_Att_EmitInts(const char *args, int width)
     Str_ListFree(&parts);
 }
 
-// Emits the bytes of a quoted string, adding a NUL when terminate is set.
+// Emit the bytes of a quoted string, adding a NUL when terminate is set.
 void Txt_x86_64_Att_EmitString(const char *args, int terminate)
 {
     const char *p = strchr(args, '"');
@@ -284,7 +284,7 @@ void Txt_x86_64_Att_EmitString(const char *args, int terminate)
     Str_Free(buf);
 }
 
-// Parses one instruction line ("mnemonic [op[, op]]") into an instruction item.
+// Parse one instruction line ("mnemonic [op[, op]]") into an instruction item.
 void Txt_x86_64_Att_ParseInstr(const char *line)
 {
     size_t mlen = strcspn(line, " \t");
@@ -350,7 +350,7 @@ void Txt_x86_64_Att_ParseInstr(const char *line)
     }
 }
 
-// Parses one directive line, lowering data directives to raw bytes.
+// Parse one directive line, lowering data directives to raw bytes.
 void Txt_x86_64_Att_ParseDirective(const char *line)
 {
     size_t nlen = strcspn(line, " \t");
@@ -422,7 +422,7 @@ void Txt_x86_64_Att_ParseDirective(const char *line)
     }
 }
 
-// Parses one line: strips its comment, then dispatches by line shape.
+// Parse one line: strip its comment, then dispatch by line shape.
 void Txt_x86_64_Att_ParseLine(char *line)
 {
     int inq = 0;
@@ -455,7 +455,7 @@ void Txt_x86_64_Att_ParseLine(char *line)
     }
 }
 
-// Parses AT&T-syntax assembly text into the instruction list.
+// Parse AT&T-syntax assembly text into the instruction list.
 void Txt_x86_64_Att_Parse(const char *text)
 {
     Asm_x86_64_Reset();
