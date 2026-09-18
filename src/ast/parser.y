@@ -237,9 +237,7 @@ expr
     | expr GE expr         { $$ = Ast_NewBinary(AST_NODE_KIND_LE, $3, $1, @2); }  /* a>=b == b<=a */
     | expr AND expr        { $$ = Ast_NewBinary(AST_NODE_KIND_AND, $1, $3, @2); }
     | expr OR expr         { $$ = Ast_NewBinary(AST_NODE_KIND_OR, $1, $3, @2); }
-    | expr ASSIGN expr
-        { if ($1->an_kind != AST_NODE_KIND_VAR) Show_ErrorAt(@2, "expression is not assignable");
-          $$ = Ast_NewBinary(AST_NODE_KIND_ASSIGN, $1, $3, @2); }
+    | expr ASSIGN expr     { $$ = Ast_NewBinary(AST_NODE_KIND_ASSIGN, $1, $3, @2); }
     | SUB expr %prec UMINUS { $$ = Ast_NewUnary(AST_NODE_KIND_NEG, $2, @1); }
     | NOT expr %prec UMINUS { $$ = Ast_NewUnary(AST_NODE_KIND_NOT, $2, @1); }
     ;

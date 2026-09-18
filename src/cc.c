@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "ast/ast.h"
+#include "ast/sem.h"
 #include "util/str.h"
 #include "arch/x86_64/gen.h"
 
@@ -110,6 +111,7 @@ int main(int argc, char **argv)
         goto cleanup;
     }
     yyparse();
+    Sem_Analyze(Ast_Program);
     fclose(yyin);
 
     // Back end: emit assembly text or a freestanding executable
