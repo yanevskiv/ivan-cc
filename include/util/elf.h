@@ -62,17 +62,19 @@
 #define ELF_R_TYPE(info) ((uint32_t) ((info) & 0xFFFFFFFF))
 
 // A growable byte buffer -- the only storage primitive, with no ELF knowledge.
-typedef struct {
+typedef struct Elf_Buf Elf_Buf;
+struct Elf_Buf {
     uint8_t *eb_data;
     size_t   eb_len;
     size_t   eb_cap;
-} Elf_Buf;
+};
 
 // Forward declaration: a symbol's defining section is a pointer to one of these.
 typedef struct Elf_Sec Elf_Sec;
 
 // One symbol; sym_sec == NULL means undefined (an external reference).
-typedef struct {
+typedef struct Elf_Sym Elf_Sym;
+struct Elf_Sym {
     const char *sym_name;    // owned by the Elf string pool
     Elf_Sec    *sym_sec;     // defining section, or NULL
     uint64_t    sym_value;   // offset within sym_sec
@@ -80,15 +82,16 @@ typedef struct {
     uint8_t     sym_bind;    // ELF_BIND_*
     uint8_t     sym_type;    // ELF_TYPE_*
     uint8_t     sym_other;   // visibility
-} Elf_Sym;
+};
 
 // One relocation; it lives in the section it patches and rel_type is opaque here.
-typedef struct {
+typedef struct Elf_Rela Elf_Rela;
+struct Elf_Rela {
     uint64_t  rel_offset;    // within the patched section
     Elf_Sym  *rel_sym;       // referenced symbol
     uint32_t  rel_type;      // R_<machine>_* (opaque here)
     int64_t   rel_addend;
-} Elf_Rela;
+};
 
 // One section; PROGBITS carry bytes in sec_data and may own their relocations.
 struct Elf_Sec {
@@ -105,7 +108,8 @@ struct Elf_Sec {
 };
 
 // The fixed-size ELF file header, on disk.
-typedef struct {
+typedef struct Elf64_Ehdr Elf64_Ehdr;
+struct Elf64_Ehdr {
     uint8_t  e_ident[16];
     uint16_t e_type;
     uint16_t e_machine;
@@ -120,10 +124,11 @@ typedef struct {
     uint16_t e_shentsize;
     uint16_t e_shnum;
     uint16_t e_shstrndx;
-} Elf64_Ehdr;
+};
 
 // One program header, describing a segment to load.
-typedef struct {
+typedef struct Elf64_Phdr Elf64_Phdr;
+struct Elf64_Phdr {
     uint32_t p_type;
     uint32_t p_flags;
     uint64_t p_offset;
@@ -132,10 +137,11 @@ typedef struct {
     uint64_t p_filesz;
     uint64_t p_memsz;
     uint64_t p_align;
-} Elf64_Phdr;
+};
 
 // One section header in the section header table.
-typedef struct {
+typedef struct Elf64_Shdr Elf64_Shdr;
+struct Elf64_Shdr {
     uint32_t sh_name;
     uint32_t sh_type;
     uint64_t sh_flags;
@@ -146,24 +152,26 @@ typedef struct {
     uint32_t sh_info;
     uint64_t sh_addralign;
     uint64_t sh_entsize;
-} Elf64_Shdr;
+};
 
 // One entry in an on-disk .symtab.
-typedef struct {
+typedef struct Elf64_Sym Elf64_Sym;
+struct Elf64_Sym {
     uint32_t st_name;
     uint8_t  st_info;
     uint8_t  st_other;
     uint16_t st_shndx;
     uint64_t st_value;
     uint64_t st_size;
-} Elf64_Sym;
+};
 
 // One entry in an on-disk .rela.* section.
-typedef struct {
+typedef struct Elf64_Rela Elf64_Rela;
+struct Elf64_Rela {
     uint64_t r_offset;
     uint64_t r_info;
     int64_t  r_addend;
-} Elf64_Rela;
+};
 
 // An ELF object: header fields, sections, symbols and a name string pool.
 struct Elf {

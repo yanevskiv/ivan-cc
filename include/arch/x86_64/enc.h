@@ -6,19 +6,21 @@
 #include "arch/x86_64/asm.h"
 
 // A label defined in the stream, awaiting its symbol-table entry.
-typedef struct {
+typedef struct Enc_x86_64_Label Enc_x86_64_Label;
+struct Enc_x86_64_Label {
     const char *al_name;
     Elf_Sec    *al_sec;
     uint64_t    al_off;
-} Enc_x86_64_Label;
+};
 
 // A pending rel32 fixup: a site in a section and the symbol name it targets.
-typedef struct {
+typedef struct Enc_x86_64_Fix Enc_x86_64_Fix;
+struct Enc_x86_64_Fix {
     Elf_Sec    *af_sec;
     uint64_t    af_off;
     const char *af_name;
     uint32_t    af_type;
-} Enc_x86_64_Fix;
+};
 
 // Byte output
 void Enc_x86_64_Emit8(int byte);

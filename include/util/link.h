@@ -8,18 +8,20 @@
 #define LINK_MAX_PLACE 16
 
 // One -place request: load the named section at a fixed address.
-typedef struct {
+typedef struct Link_Place Link_Place;
+struct Link_Place {
     const char *lp_name;
     uint64_t    lp_addr;
-} Link_Place;
+};
 
 // Options controlling a link.
-typedef struct {
+typedef struct Link_Options Link_Options;
+struct Link_Options {
     const char *lo_entry;        // entry symbol (NULL selects _start)
     int         lo_relocatable;  // -r: merge into an ET_REL object, keep relocs
     Link_Place  lo_places[LINK_MAX_PLACE];
     int         lo_nplaces;
-} Link_Options;
+};
 
 // Object indices and global lookup
 long     Link_SectionIndex(const Elf *elf, const Elf_Sec *target);

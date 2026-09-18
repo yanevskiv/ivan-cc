@@ -4,7 +4,8 @@
 #include <stdint.h>
 
 // Registers
-typedef enum {
+typedef enum Asm_x86_64_Reg Asm_x86_64_Reg;
+enum Asm_x86_64_Reg {
     ASM_X86_64_REG_RAX = 0,
     ASM_X86_64_REG_RCX,
     ASM_X86_64_REG_RDX,
@@ -21,10 +22,11 @@ typedef enum {
     ASM_X86_64_REG_R13,
     ASM_X86_64_REG_R14,
     ASM_X86_64_REG_R15
-} Asm_x86_64_Reg;
+};
 
 // Opcodes
-typedef enum {
+typedef enum Asm_x86_64_Op Asm_x86_64_Op;
+enum Asm_x86_64_Op {
     ASM_X86_64_OP_MOV = 0,
     ASM_X86_64_OP_LEA,
     ASM_X86_64_OP_PUSH,
@@ -47,37 +49,40 @@ typedef enum {
     ASM_X86_64_OP_CALL,
     ASM_X86_64_OP_RET,
     ASM_X86_64_OP_SYSCALL
-} Asm_x86_64_Op;
+};
 
 // How an operand is addressed.
-typedef enum {
+typedef enum Asm_x86_64_OperandKind Asm_x86_64_OperandKind;
+enum Asm_x86_64_OperandKind {
     ASM_X86_64_OPERAND_NONE,
     ASM_X86_64_OPERAND_REG,   // ao_reg, ao_width      %rax / %al
     ASM_X86_64_OPERAND_IMM,   // ao_imm                $42
     ASM_X86_64_OPERAND_MEM,   // ao_reg (base), ao_disp   -8(%rbp)
     ASM_X86_64_OPERAND_RIP,   // ao_label              .Lstr0(%rip)
     ASM_X86_64_OPERAND_LABEL  // ao_label              jump / call target
-} Asm_x86_64_OperandKind;
+};
 
 // A single instruction operand.
-typedef struct {
+typedef struct Asm_x86_64_Operand Asm_x86_64_Operand;
+struct Asm_x86_64_Operand {
     Asm_x86_64_OperandKind ao_kind;
     Asm_x86_64_Reg         ao_reg;    // REG, or base of MEM
     long                   ao_imm;    // IMM
     int                    ao_disp;   // MEM displacement
     const char            *ao_label;  // RIP / LABEL
     int                    ao_width;  // REG width in bits: 8 or 64
-} Asm_x86_64_Operand;
+};
 
 // The kind of one item in the instruction list.
-typedef enum {
+typedef enum Asm_x86_64_ItemKind Asm_x86_64_ItemKind;
+enum Asm_x86_64_ItemKind {
     ASM_X86_64_ITEM_INSTR,     // ai_op, ai_dst, ai_src
     ASM_X86_64_ITEM_LABEL,     // ai_label defined here
     ASM_X86_64_ITEM_GLOBL,     // ai_label marked global
     ASM_X86_64_ITEM_SECTION,   // switch to ai_secname
     ASM_X86_64_ITEM_BYTES,     // ai_bytes / ai_nbytes raw data
     ASM_X86_64_ITEM_DIRECTIVE  // ai_text raw assembler line
-} Asm_x86_64_ItemKind;
+};
 
 // One node in the ordered instruction list.
 typedef struct Asm_x86_64_Item Asm_x86_64_Item;
