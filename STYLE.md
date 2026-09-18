@@ -32,6 +32,15 @@
   short run of assignments). Don't force alignment across unrelated lines.
 - Keep lines within roughly 100 columns.
 
+## Structure
+
+- Don't use `static`. Every function and every file-scope variable is
+  declared in the module's header, so the header reads as a complete
+  overview of what the `.c` file is and does. A reader should not have to
+  open the `.c` to find out what is in it.
+- A `.c` file defines things in the same order its header declares them, so
+  the two can be read side by side.
+
 ## Comments
 
 Comments are load-bearing, not decorative. Every comment should tell the

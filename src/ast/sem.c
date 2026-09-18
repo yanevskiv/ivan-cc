@@ -4,13 +4,13 @@
 #include "ast/sem.h"
 
 // The program being analysed, for resolving calls against its definitions.
-static Ast_Func *Sem_Prog;
+Ast_Func *Sem_Prog;
 
 // The type of a string literal, built once and shared.
-static Ast_Type *Sem_TypeCharPtr;
+Ast_Type *Sem_TypeCharPtr;
 
 // Returns the function of that name defined in this program, or NULL.
-static Ast_Func *Sem_FindFunc(const char *name)
+Ast_Func *Sem_FindFunc(const char *name)
 {
     for (Ast_Func *func = Sem_Prog; func; func = func->af_next) {
         if (strcmp(func->af_name, name) == 0) {
@@ -21,7 +21,7 @@ static Ast_Func *Sem_FindFunc(const char *name)
 }
 
 // Returns the length of a node list.
-static int Sem_CountNodes(Ast_Node *list)
+int Sem_CountNodes(Ast_Node *list)
 {
     int count = 0;
     for (Ast_Node *node = list; node; node = node->an_next) {
@@ -31,7 +31,7 @@ static int Sem_CountNodes(Ast_Node *list)
 }
 
 // Checks a call against the callee's definition, if this program has one.
-static void Sem_CheckCall(Ast_Node *node)
+void Sem_CheckCall(Ast_Node *node)
 {
     Ast_Func *func = Sem_FindFunc(node->an_funcname);
     if (! func) {
@@ -45,7 +45,7 @@ static void Sem_CheckCall(Ast_Node *node)
 }
 
 // Annotates a node and everything below it, depth first.
-static void Sem_Node(Ast_Node *node)
+void Sem_Node(Ast_Node *node)
 {
     if (! node) {
         return;
