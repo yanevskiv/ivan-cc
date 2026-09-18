@@ -76,45 +76,44 @@ void Sem_Node(Ast_Node *node)
         case AST_NODE_KIND_LT:
         case AST_NODE_KIND_LE:
         case AST_NODE_KIND_AND:
-        case AST_NODE_KIND_OR:
+        case AST_NODE_KIND_OR: {
             node->an_type = &Ast_TypeInt;
-            break;
+        } break;
 
-        case AST_NODE_KIND_STR:
+        case AST_NODE_KIND_STR: {
             node->an_type = Sem_TypeCharPtr;
-            break;
+        } break;
 
-        case AST_NODE_KIND_VAR:
+        case AST_NODE_KIND_VAR: {
             node->an_type = node->an_var->av_type;
-            break;
+        } break;
 
-        case AST_NODE_KIND_ASSIGN:
+        case AST_NODE_KIND_ASSIGN: {
             if (node->an_lhs->an_kind != AST_NODE_KIND_VAR) {
                 Show_ErrorAt(node->an_line, "expression is not assignable");
             }
             node->an_type = node->an_lhs->an_type;
-            break;
+        } break;
 
-        case AST_NODE_KIND_CALL:
+        case AST_NODE_KIND_CALL: {
             Sem_CheckCall(node);
             node->an_type = &Ast_TypeInt;
-            break;
+        } break;
 
         case AST_NODE_KIND_RETURN:
         case AST_NODE_KIND_IF:
         case AST_NODE_KIND_FOR:
         case AST_NODE_KIND_BLOCK:
         case AST_NODE_KIND_EXPR_STMT:
-        case AST_NODE_KIND_NOP:
-            break;
+        case AST_NODE_KIND_NOP: {
+        } break;
     }
 }
-
 
 // Annotates every node with its type and rejects what the grammar cannot.
 void Sem_Analyze(Ast_Func *prog)
 {
-    Sem_Prog        = prog;
+    Sem_Prog = prog;
     Sem_TypeCharPtr = Ast_NewPointer(&Ast_TypeChar);
 
     for (Ast_Func *func = prog; func; func = func->af_next) {
