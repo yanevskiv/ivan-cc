@@ -4,6 +4,12 @@
 // Maximum number of distinct string literals in one translation unit.
 #define MAX_STRINGS 1024
 
+// An interned string literal, kept with its length because it may embed a NUL.
+typedef struct {
+    char *as_data; // decoded bytes, also NUL-terminated so it can be printed
+    int   as_len;  // number of bytes before that terminator
+} Ast_Str;
+
 // The kind of an AST node.
 typedef enum {
     AST_NODE_KIND_NUM,       // integer literal
@@ -92,8 +98,8 @@ Ast_Var *Ast_DeclareVar(const char *name, int line);
 Ast_Var *Ast_CurrentLocals(void);
 
 // String literal interning
-int   Ast_AddString(char *s);
-int   Ast_StringCount(void);
-char *Ast_StringAt(int idx);
+int      Ast_AddString(char *s, int len);
+int      Ast_StringCount(void);
+Ast_Str *Ast_StringAt(int idx);
 
 #endif // AST_H

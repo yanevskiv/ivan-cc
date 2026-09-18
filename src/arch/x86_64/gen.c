@@ -319,9 +319,9 @@ void Gen_x86_64_EmitDataSection(void)
     }
     Asm_x86_64_EmitSection(".rodata", ELF_SHT_PROGBITS, ELF_SHF_ALLOC);
     for (int i = 0; i < count; i++) {
-        char *str = Ast_StringAt(i);
+        Ast_Str *str = Ast_StringAt(i);
         Asm_x86_64_EmitLabel(".Lstr%d", i);
-        Asm_x86_64_EmitBytes(str, strlen(str) + 1);
+        Asm_x86_64_EmitBytes(str->as_data, str->as_len + 1);
     }
 }
 

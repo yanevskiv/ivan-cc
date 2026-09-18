@@ -57,11 +57,13 @@ static void add_function(Ast_Func *fn)
 %union {
     long      num;
     char     *str;
+    Ast_Str   str_lit;
     Ast_Node *node;
 }
 
-%token <num> NUM
-%token <str> IDENT STR
+%token <num>     NUM
+%token <str>     IDENT
+%token <str_lit> STR
 %token INT CHAR VOID CONST RETURN IF ELSE FOR WHILE BREAK CONTINUE
 %token ADD SUB MUL DIV MOD ASSIGN NOT AMP
 %token EQ NE LT GT LE GE AND OR
@@ -208,7 +210,7 @@ expr_opt
 expr
     : NUM                  { $$ = Ast_NewNum($1, @1); }
     | STR                  { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_STR, @1);
-                             n->an_str_idx = Ast_AddString($1); $$ = n; }
+                             n->an_str_idx = Ast_AddString($1.as_data, $1.as_len); $$ = n; }
     | IDENT
         { Ast_Var *v = Ast_FindVar($1);
           if (! v) Show_ErrorAt(@1, "use of undeclared identifier '%s'", $1);

@@ -8,7 +8,7 @@
 Ast_Func *Ast_Program;
 
 // Table of interned string literals, indexed by AST_NODE_KIND_STR slot.
-static char *Ast_Strings[MAX_STRINGS];
+static Ast_Str Ast_Strings[MAX_STRINGS];
 
 // Number of entries currently used in Ast_Strings.
 static int Ast_NumStrings;
@@ -16,13 +16,14 @@ static int Ast_NumStrings;
 // Locals of the function currently being parsed.
 static Ast_Var *Ast_Locals;
 
-// Interns a string literal and returns its table slot.
-int Ast_AddString(char *str)
+// Interns a decoded string literal of len bytes and returns its table slot.
+int Ast_AddString(char *str, int len)
 {
     if (Ast_NumStrings >= MAX_STRINGS) {
         Show_Error("too many string literals (max %d)", MAX_STRINGS);
     }
-    Ast_Strings[Ast_NumStrings] = str;
+    Ast_Strings[Ast_NumStrings].as_data = str;
+    Ast_Strings[Ast_NumStrings].as_len  = len;
     return Ast_NumStrings++;
 }
 
@@ -113,7 +114,7 @@ int Ast_StringCount(void)
 }
 
 // Returns the interned string literal in the given slot.
-char *Ast_StringAt(int idx)
+Ast_Str *Ast_StringAt(int idx)
 {
-    return Ast_Strings[idx];
+    return &Ast_Strings[idx];
 }
