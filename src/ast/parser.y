@@ -25,38 +25,39 @@ void yyerror(const char *s);
 #define YYLLOC_DEFAULT(cur, rhs, n)  ((cur) = (n) ? YYRHSLOC(rhs, 1) : YYRHSLOC(rhs, 0))
 
 /* State for the function definition currently being parsed. */
-static char    *cur_func_name;
-static Ast_Var *cur_params;
-static Ast_Var *cur_params_tail;
-static int      cur_nparams;
+static char     *Parser_CurFuncName;
+static Ast_Var  *Parser_CurParams;
+static Ast_Var  *Parser_CurParamsTail;
+static int       Parser_CurNumParams;
 
-/* The program is assembled here as functions are reduced. */
-static Ast_Func *prog_head, *prog_tail;
+/* The program assembled so far, as functions are reduced. */
+static Ast_Func *Parser_ProgHead;
+static Ast_Func *Parser_ProgTail;
 
 /* Appends a parameter to the function currently being parsed. */
-static void add_param(Ast_Var *v)
+static void Parser_AddParam(Ast_Var *v)
 {
     v->av_param_next = NULL;
-    if (! cur_params) {
-        cur_params = cur_params_tail = v;
+    if (! Parser_CurParams) {
+        Parser_CurParams = Parser_CurParamsTail = v;
     } else {
-        cur_params_tail->av_param_next = v;
-        cur_params_tail = v;
+        Parser_CurParamsTail->av_param_next = v;
+        Parser_CurParamsTail = v;
     }
-    cur_nparams++;
+    Parser_CurNumParams++;
 }
 
 /* Appends a finished function to the program. */
-static void add_function(Ast_Func *fn)
+static void Parser_AddFunction(Ast_Func *fn)
 {
     fn->af_next = NULL;
-    if (! prog_head) {
-        prog_head = prog_tail = fn;
+    if (! Parser_ProgHead) {
+        Parser_ProgHead = Parser_ProgTail = fn;
     } else {
-        prog_tail->af_next = fn;
-        prog_tail = fn;
+        Parser_ProgTail->af_next = fn;
+        Parser_ProgTail = fn;
     }
-    Ast_Program = prog_head;
+    Ast_Program = Parser_ProgHead;
 }
 %}
 
@@ -109,10 +110,10 @@ translation_unit
 external_decl
     : type_name IDENT LPAREN
         {
-            cur_func_name   = $2;
-            cur_params      = NULL;
-            cur_params_tail = NULL;
-            cur_nparams     = 0;
+            Parser_CurFuncName   = $2;
+            Parser_CurParams     = NULL;
+            Parser_CurParamsTail = NULL;
+            Parser_CurNumParams  = 0;
             Ast_BeginScope();
         }
       params RPAREN func_tail
@@ -122,12 +123,12 @@ func_tail
     : compound_stmt
         {
             Ast_Func *fn = calloc(1, sizeof(Ast_Func));
-            fn->af_name    = cur_func_name;
+            fn->af_name    = Parser_CurFuncName;
             fn->af_body    = $1;
-            fn->af_params  = cur_params;
-            fn->af_nparams = cur_nparams;
+            fn->af_params  = Parser_CurParams;
+            fn->af_nparams = Parser_CurNumParams;
             fn->af_locals  = Ast_CurrentLocals();
-            add_function(fn);
+            Parser_AddFunction(fn);
         }
     | SEMI  /* a prototype, e.g. `int printf(const char *, ...);` -- discard */
     ;
@@ -143,7 +144,7 @@ param_list
     ;
 
 param
-    : type_name IDENT   { add_param(Ast_DeclareVar($2, $1, @2)); }
+    : type_name IDENT   { Parser_AddParam(Ast_DeclareVar($2, $1, @2)); }
     | type_name         /* unnamed parameter, e.g. `void` */
     | ELLIPSIS          /* variadic marker, ignored */
     ;
