@@ -4,10 +4,10 @@
 #include "ast/sem.h"
 
 // The program being analysed, for resolving calls against its definitions.
-Ast_Func *Sem_Prog;
+static Ast_Func *Sem_Prog;
 
 // The type of a string literal, built once and shared.
-Ast_Type *Sem_TypeCharPtr;
+static Ast_Type *Sem_TypeCharPtr;
 
 // Returns the function of that name defined in this program, or NULL.
 Ast_Func *Sem_FindFunc(const char *name)
