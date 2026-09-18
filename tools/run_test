@@ -67,6 +67,13 @@ setup()
     fi
 }
 
+# Check that the test compiled at all.
+test_compile()
+{
+    [ "$COMPILE_STATUS" -eq 0 ] || fail "Compilation failed
+$(cat "$COMPILE_ERR")"
+}
+
 # Check the run against `// (Test) Return:`.
 test_return()
 {
@@ -79,9 +86,6 @@ test_return()
     esac
     [ "$EXPECT" -le 255 ] || fail "Return expects a number between 0 and 255, got '$EXPECT'"
 
-    [ "$COMPILE_STATUS" -eq 0 ] || fail "Compilation failed
-$(cat "$COMPILE_ERR")"
-
     # Checked before the signal cases below, which a status of 204 is otherwise
     # indistinguishable from.
     [ "$STATUS" -ne "$EXPECT" ] || pass
@@ -93,4 +97,5 @@ $(cat "$COMPILE_ERR")"
 }
 
 setup
+test_compile
 test_return
