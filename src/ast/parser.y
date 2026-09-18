@@ -3,9 +3,11 @@
  * Generates build/parser.tab.c and build/parser.tab.h
  * (via `bison -d -o build/parser.tab.c`).
  *
- * The grammar is deliberately flat: operator precedence is resolved through
- * the %left / %right declarations below rather than through a tower of
- * non-terminals, which keeps the grammar short and easy to extend.
+ * Binary operators are deliberately flat: their precedence comes from the
+ * %left / %right declarations below rather than from a tower of non-terminals.
+ * The prefix and postfix operators do need levels of their own, because
+ * `sizeof` takes a unary-expression: that is what stops `sizeof (int) * n`
+ * from parsing as `sizeof ((int) * n)`.
  */
 
 %code requires {
@@ -47,6 +49,15 @@ static void Par_AddParam(Ast_Var *v)
     Par_CurNumParams++;
 }
 
+/* Wraps base in the array dimensions listed outermost first. */
+static Ast_Type *Par_ArrayType(Ast_Type *base, Ast_Node *dims)
+{
+    if (! dims) {
+        return base;
+    }
+    return Ast_NewArray(Par_ArrayType(base, dims->an_next), (int) dims->an_val);
+}
+
 /* Appends a finished function to the program. */
 static void Par_AddFunction(Ast_Func *fn)
 {
@@ -75,12 +86,13 @@ static void Par_AddFunction(Ast_Func *fn)
 %token <num>     NUM
 %token <str>     IDENT
 %token <str_lit> STR
-%token INT CHAR VOID CONST RETURN IF ELSE FOR WHILE BREAK CONTINUE
+%token INT CHAR VOID CONST RETURN IF ELSE FOR WHILE BREAK CONTINUE SIZEOF
 %token ADD SUB MUL DIV MOD ASSIGN NOT AMP
 %token EQ NE LT GT LE GE AND OR
 %token LPAREN RPAREN LSQUARE RSQUARE LBRACE RBRACE SEMI COMMA ELLIPSIS
 
 %type <node> stmt stmt_list compound_stmt decl expr expr_opt args arg_list
+%type <node> cast unary postfix primary array_dims
 %type <type> type_name base
 %type <num>  stars
 
@@ -94,7 +106,6 @@ static void Par_AddFunction(Ast_Func *fn)
 %left LT GT LE GE
 %left ADD SUB
 %left MUL DIV MOD
-%right NOT UMINUS
 
 %start translation_unit
 
@@ -208,12 +219,18 @@ stmt
     ;
 
 decl
-    : type_name IDENT
-        { Ast_DeclareVar($2, $1, @2); $$ = Ast_NewNode(AST_NODE_KIND_NOP, @2); }
+    : type_name IDENT array_dims
+        { Ast_DeclareVar($2, Par_ArrayType($1, $3), @2); $$ = Ast_NewNode(AST_NODE_KIND_NOP, @2); }
     | type_name IDENT ASSIGN expr
         { Ast_Var *v = Ast_DeclareVar($2, $1, @2);
           Ast_Node *n = Ast_NewBinary(AST_NODE_KIND_ASSIGN, Ast_NewVarNode(v, @2), $4, @3);
           $$ = Ast_NewUnary(AST_NODE_KIND_EXPR_STMT, n, @2); }
+    ;
+
+array_dims
+    : /* empty */          { $$ = NULL; }
+    | LSQUARE NUM RSQUARE array_dims
+        { Ast_Node *n = Ast_NewNum($2, @1); n->an_next = $4; $$ = n; }
     ;
 
 expr_opt
@@ -224,17 +241,7 @@ expr_opt
 /* ---- expressions --------------------------------------------------- */
 
 expr
-    : NUM                  { $$ = Ast_NewNum($1, @1); }
-    | STR                  { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_STR, @1);
-                             n->an_str_idx = Ast_AddString($1.as_data, $1.as_len); $$ = n; }
-    | IDENT
-        { Ast_Var *v = Ast_FindVar($1);
-          if (! v) Log_ShowErrorAt(@1, "use of undeclared identifier '%s'", $1);
-          $$ = Ast_NewVarNode(v, @1); }
-    | IDENT LPAREN args RPAREN
-        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_CALL, @1);
-          n->an_funcname = $1; n->an_args = $3; $$ = n; }
-    | LPAREN expr RPAREN   { $$ = $2; }
+    : cast                 { $$ = $1; }
     | expr ADD expr        { $$ = Ast_NewBinary(AST_NODE_KIND_ADD, $1, $3, @2); }
     | expr SUB expr        { $$ = Ast_NewBinary(AST_NODE_KIND_SUB, $1, $3, @2); }
     | expr MUL expr        { $$ = Ast_NewBinary(AST_NODE_KIND_MUL, $1, $3, @2); }
@@ -249,8 +256,44 @@ expr
     | expr AND expr        { $$ = Ast_NewBinary(AST_NODE_KIND_AND, $1, $3, @2); }
     | expr OR expr         { $$ = Ast_NewBinary(AST_NODE_KIND_OR, $1, $3, @2); }
     | expr ASSIGN expr     { $$ = Ast_NewBinary(AST_NODE_KIND_ASSIGN, $1, $3, @2); }
-    | SUB expr %prec UMINUS { $$ = Ast_NewUnary(AST_NODE_KIND_NEG, $2, @1); }
-    | NOT expr %prec UMINUS { $$ = Ast_NewUnary(AST_NODE_KIND_NOT, $2, @1); }
+    ;
+
+cast
+    : unary                { $$ = $1; }
+    | LPAREN type_name RPAREN cast
+        { Ast_Node *n = Ast_NewUnary(AST_NODE_KIND_CAST, $4, @1); n->an_type = $2; $$ = n; }
+    ;
+
+unary
+    : postfix              { $$ = $1; }
+    | SUB cast             { $$ = Ast_NewUnary(AST_NODE_KIND_NEG, $2, @1); }
+    | NOT cast             { $$ = Ast_NewUnary(AST_NODE_KIND_NOT, $2, @1); }
+    | MUL cast             { $$ = Ast_NewUnary(AST_NODE_KIND_DEREF, $2, @1); }
+    | AMP cast             { $$ = Ast_NewUnary(AST_NODE_KIND_ADDR, $2, @1); }
+    | SIZEOF unary         { $$ = Ast_NewUnary(AST_NODE_KIND_SIZEOF, $2, @1); }
+    | SIZEOF LPAREN type_name RPAREN
+        { $$ = Ast_NewNum($3->at_size, @1); }
+    ;
+
+postfix
+    : primary              { $$ = $1; }
+    | postfix LSQUARE expr RSQUARE
+        { Ast_Node *n = Ast_NewBinary(AST_NODE_KIND_ADD, $1, $3, @2);
+          $$ = Ast_NewUnary(AST_NODE_KIND_DEREF, n, @2); }
+    ;
+
+primary
+    : NUM                  { $$ = Ast_NewNum($1, @1); }
+    | STR                  { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_STR, @1);
+                             n->an_str_idx = Ast_AddString($1.as_data, $1.as_len); $$ = n; }
+    | IDENT
+        { Ast_Var *v = Ast_FindVar($1);
+          if (! v) Log_ShowErrorAt(@1, "use of undeclared identifier '%s'", $1);
+          $$ = Ast_NewVarNode(v, @1); }
+    | IDENT LPAREN args RPAREN
+        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_CALL, @1);
+          n->an_funcname = $1; n->an_args = $3; $$ = n; }
+    | LPAREN expr RPAREN   { $$ = $2; }
     ;
 
 args

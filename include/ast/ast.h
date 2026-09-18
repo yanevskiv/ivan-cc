@@ -67,6 +67,10 @@ enum Ast_NodeKind {
     AST_NODE_KIND_MOD,       // lhs % rhs
     AST_NODE_KIND_NEG,       // -lhs
     AST_NODE_KIND_NOT,       // !lhs
+    AST_NODE_KIND_ADDR,      // &lhs
+    AST_NODE_KIND_DEREF,     // *lhs
+    AST_NODE_KIND_CAST,      // (type) lhs
+    AST_NODE_KIND_SIZEOF,    // sizeof lhs, folded to a constant by the Sem_ pass
     AST_NODE_KIND_EQ,        // lhs == rhs
     AST_NODE_KIND_NE,        // lhs != rhs
     AST_NODE_KIND_LT,        // lhs <  rhs   (> is LT reversed)

@@ -69,11 +69,44 @@ int Gen_x86_64_TypeWidth(const Ast_Type *type)
 // Computes the address of an lvalue into %rax.
 void Gen_x86_64_EmitAddr(Ast_Node *node)
 {
-    if (node->an_kind == AST_NODE_KIND_VAR) {
-        Asm_x86_64_EmitLea(ASM_X86_64_REG_RBP, node->an_var->av_offset, ASM_X86_64_REG_RAX);
+    switch (node->an_kind) {
+        case AST_NODE_KIND_VAR: {
+            Asm_x86_64_EmitLea(ASM_X86_64_REG_RBP, node->an_var->av_offset, ASM_X86_64_REG_RAX);
+        } break;
+        case AST_NODE_KIND_DEREF: {
+            Gen_x86_64_EmitExpr(node->an_lhs);
+        } break;
+        default: {
+            Log_ShowErrorAt(node->an_line, "codegen: not an lvalue");
+        }
+    }
+}
+
+// Loads the value at the address in %rax; an array's value is that address.
+void Gen_x86_64_EmitLoad(const Ast_Type *type)
+{
+    if (type->at_kind == AST_TYPE_KIND_ARRAY) {
         return;
     }
-    Log_ShowErrorAt(node->an_line, "codegen: not an lvalue");
+    Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RAX, 0, ASM_X86_64_REG_RAX, Gen_x86_64_TypeWidth(type));
+}
+
+// Narrows the value in %rax to type, sign-extending it back to 64 bits.
+void Gen_x86_64_EmitCast(const Ast_Type *type)
+{
+    switch (type->at_kind) {
+        case AST_TYPE_KIND_CHAR: {
+            Asm_x86_64_EmitMovsx(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RAX, AST_TYPE_SIZE_CHAR * 8);
+        } break;
+        case AST_TYPE_KIND_INT: {
+            Asm_x86_64_EmitMovsx(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RAX, AST_TYPE_SIZE_INT * 8);
+        } break;
+        case AST_TYPE_KIND_VOID:
+        case AST_TYPE_KIND_PTR:
+        case AST_TYPE_KIND_ARRAY: {
+            // already as wide as a register
+        } break;
+    }
 }
 
 // Counts the arguments in a call's argument list.
@@ -115,10 +148,17 @@ void Gen_x86_64_EmitExpr(Ast_Node *node)
         case AST_NODE_KIND_STR: {
             Asm_x86_64_EmitLeaRip(ASM_X86_64_REG_RAX, ".Lstr%d", node->an_str_idx);
         } break;
-        case AST_NODE_KIND_VAR: {
-            int width = Gen_x86_64_TypeWidth(node->an_type);
+        case AST_NODE_KIND_VAR:
+        case AST_NODE_KIND_DEREF: {
             Gen_x86_64_EmitAddr(node);
-            Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RAX, 0, ASM_X86_64_REG_RAX, width);
+            Gen_x86_64_EmitLoad(node->an_type);
+        } break;
+        case AST_NODE_KIND_ADDR: {
+            Gen_x86_64_EmitAddr(node->an_lhs);
+        } break;
+        case AST_NODE_KIND_CAST: {
+            Gen_x86_64_EmitExpr(node->an_lhs);
+            Gen_x86_64_EmitCast(node->an_type);
         } break;
         case AST_NODE_KIND_ASSIGN: {
             Gen_x86_64_EmitAddr(node->an_lhs);

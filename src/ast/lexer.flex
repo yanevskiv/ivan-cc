@@ -83,6 +83,7 @@ ALNUM   [A-Za-z_0-9]
 "while"                 return WHILE;
 "break"                 return BREAK;
 "continue"              return CONTINUE;
+"sizeof"                return SIZEOF;
 
 {ALPHA}{ALNUM}*         { yylval.str = strdup(yytext); return IDENT; }
 

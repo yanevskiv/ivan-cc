@@ -207,6 +207,15 @@ void Asm_x86_64_EmitMovRR(Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Reg64(src);
 }
 
+// Emits `movs<w>q %src, %dst` (sign-extend the low width bits into 64 bits).
+void Asm_x86_64_EmitMovsx(Asm_x86_64_Reg src, Asm_x86_64_Reg dst, int width)
+{
+    Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
+    item->ai_op  = ASM_X86_64_OP_MOVSX;
+    item->ai_dst = Asm_x86_64_Reg64(dst);
+    item->ai_src = Asm_x86_64_RegWidth(src, width);
+}
+
 // Emits `idiv %reg`.
 void Asm_x86_64_EmitIdiv(Asm_x86_64_Reg reg)
 {

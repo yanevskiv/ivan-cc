@@ -224,20 +224,24 @@ void Enc_x86_64_EmitMemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base,
     Enc_x86_64_EmitMem(reg, base, disp);
 }
 
-// Emits a sign-extending load `movs<w>q disp(%base), %dst`.
+// Emits a sign-extending `movs<w>q` from a register or from disp(%base).
 void Enc_x86_64_EmitMovsx(const Asm_x86_64_Item *item)
 {
-    Asm_x86_64_Reg dst  = item->ai_dst.ao_reg;
-    Asm_x86_64_Reg base = item->ai_src.ao_reg;
+    Asm_x86_64_Reg dst = item->ai_dst.ao_reg;
+    Asm_x86_64_Reg src = item->ai_src.ao_reg;
 
-    Enc_x86_64_EmitRexW(Enc_x86_64_RegHigh(dst), Enc_x86_64_RegHigh(base));
+    Enc_x86_64_EmitRexW(Enc_x86_64_RegHigh(dst), Enc_x86_64_RegHigh(src));
     if (item->ai_src.ao_width == 8) {
         Enc_x86_64_Emit8(0x0F);
         Enc_x86_64_Emit8(0xBE);
     } else {
         Enc_x86_64_Emit8(0x63);
     }
-    Enc_x86_64_EmitMem(dst, base, item->ai_src.ao_disp);
+    if (item->ai_src.ao_kind == ASM_X86_64_OPERAND_REG) {
+        Enc_x86_64_EmitModRR(dst, src);
+    } else {
+        Enc_x86_64_EmitMem(dst, src, item->ai_src.ao_disp);
+    }
 }
 
 // Emits `lea label(%rip), %dst` with a rel32 fixup to label.
