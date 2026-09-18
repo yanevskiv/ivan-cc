@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# ivan-test - compile one test file, run it, and check what it claims.
+# run_test - compile one test file, run it, and check what it claims.
 
 set -u
 
