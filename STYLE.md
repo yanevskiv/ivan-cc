@@ -40,9 +40,9 @@
   it, and that wins over the length order.
 - `sizeof` always takes parentheses: `sizeof(int)`, `sizeof(*item)`,
   `sizeof(buf)` — never `sizeof buf`.
-- Keep lines within roughly 100 columns. A function declaration or
-  definition is the exception: it stays on one line however long it gets,
-  never wrapped across two.
+- Keep lines within roughly 100 columns. Calls and declarations are the
+  exception: a function declaration, definition or call stays on one line
+  however long it gets, never wrapped across two.
 
 ## Structure
 

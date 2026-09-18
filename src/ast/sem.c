@@ -39,8 +39,7 @@ void Sem_CheckCall(Ast_Node *node)
     }
     int given = Sem_CountNodes(node->an_args);
     if (given != func->af_nparams) {
-        Show_ErrorAt(node->an_line, "wrong number of arguments to '%s': got %d, expected %d",
-                     node->an_funcname, given, func->af_nparams);
+        Show_ErrorAt(node->an_line, "wrong number of arguments to '%s': got %d, expected %d", node->an_funcname, given, func->af_nparams);
     }
 }
 
