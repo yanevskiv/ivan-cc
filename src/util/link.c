@@ -121,6 +121,19 @@ void Link_Merge(Elf *out, Elf *in)
     free(symmap);
 }
 
+// Reads each object file and merges it into out.
+void Link_MergeFiles(Elf *out, const char *const *paths, int npaths)
+{
+    for (int i = 0; i < npaths; i++) {
+        Elf *in = Elf_Read(paths[i]);
+        if (! in) {
+            Show_Error("cannot read object '%s'", paths[i]);
+        }
+        Link_Merge(out, in);
+        Elf_Free(in);
+    }
+}
+
 // Load address requested for a section by name, or 0 if it is unplaced.
 uint64_t Link_PlacedAddr(const Link_Options *opts, const char *name, int *placed)
 {
@@ -192,14 +205,7 @@ void Link_Exec(Elf *elf, const Link_Options *opts)
 Elf *Link_Run(const char *const *paths, int npaths, const Link_Options *opts)
 {
     Elf *out = Elf_New(ELF_ET_REL, ELF_EM_X86_64);
-    for (int i = 0; i < npaths; i++) {
-        Elf *in = Elf_Read(paths[i]);
-        if (! in) {
-            Show_Error("cannot read object '%s'", paths[i]);
-        }
-        Link_Merge(out, in);
-        Elf_Free(in);
-    }
+    Link_MergeFiles(out, paths, npaths);
 
     if (! opts->lo_relocatable) {
         Link_Exec(out, opts);

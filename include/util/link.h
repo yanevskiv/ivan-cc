@@ -30,6 +30,7 @@ Elf_Sym *Link_FindGlobal(Elf *elf, const char *name);
 
 // Merging objects
 void Link_Merge(Elf *out, Elf *in);
+void Link_MergeFiles(Elf *out, const char *const *paths, int npaths);
 
 // Placing sections and checking symbols
 uint64_t Link_PlacedAddr(const Link_Options *opts, const char *name, int *placed);
