@@ -6,28 +6,6 @@
 #include "arch/x86_64/enc.h"
 #include "arch/x86_64/rel.h"
 
-// REX prefix bits: 64-bit operand (W) and high-register extensions (R/B).
-#define REX_BASE 0x40
-#define REX_W    0x08
-#define REX_R    0x04
-#define REX_B    0x01
-
-// ModRM mod field for a register-direct operand (mod = 11).
-#define MODRM_DIRECT 0xC0
-
-// SIB byte selecting %rsp as base with no index.
-#define SIB_BASE_RSP 0x24
-
-// Opcode-group /digit extensions for the 0x81 and 0xF7 instruction groups.
-#define GRP_ADD  0
-#define GRP_SUB  5
-#define GRP_CMP  7
-#define GRP_NEG  3
-#define GRP_IDIV 7
-
-// A rel32 fixup targets its exact site, so it carries an addend of -4.
-#define ENC_X86_64_REL32_ADDEND (-4)
-
 // The object being encoded.
 static Elf *Enc_x86_64_Out;
 
@@ -115,41 +93,41 @@ void Enc_x86_64_RecordFixup(const char *name, uint32_t type)
 // Returns the high bit of a register number, extending ModRM.reg or .rm.
 int Enc_x86_64_RegHigh(Asm_x86_64_Reg reg)
 {
-    return reg >> 3;
+    return reg >> ENC_X86_64_REG_SHIFT;
 }
 
 // Emits a REX.W prefix with the given reg- and rm-field extension bits.
 void Enc_x86_64_EmitRexW(int regHigh, int rmHigh)
 {
-    Enc_x86_64_Emit8(REX_BASE | REX_W | (regHigh ? REX_R : 0) | (rmHigh ? REX_B : 0));
+    Enc_x86_64_Emit8(ENC_X86_64_REX_BASE | ENC_X86_64_REX_W | (regHigh ? ENC_X86_64_REX_R : 0) | (rmHigh ? ENC_X86_64_REX_B : 0));
 }
 
 // Emits a register-direct ModRM byte pairing reg with rm.
 void Enc_x86_64_EmitModRR(int reg, Asm_x86_64_Reg rm)
 {
-    Enc_x86_64_Emit8(MODRM_DIRECT | ((reg & 7) << 3) | (rm & 7));
+    Enc_x86_64_Emit8((ENC_X86_64_MOD_DIRECT << ENC_X86_64_MOD_SHIFT) | ((reg & ENC_X86_64_REG_MASK) << ENC_X86_64_REG_SHIFT) | (rm & ENC_X86_64_REG_MASK));
 }
 
 // Emits the ModRM, optional SIB and displacement for disp(%base).
 void Enc_x86_64_EmitMem(int reg, Asm_x86_64_Reg base, int disp)
 {
-    int rm  = base & 7;
+    int rm  = base & ENC_X86_64_REG_MASK;
     int mod;
-    if (disp == 0 && rm != (ASM_X86_64_REG_RBP & 7)) {
-        mod = 0;
-    } else if (disp >= -128 && disp <= 127) {
-        mod = 1;
+    if (disp == 0 && rm != (ASM_X86_64_REG_RBP & ENC_X86_64_REG_MASK)) {
+        mod = ENC_X86_64_MOD_INDIRECT;
+    } else if (disp >= INT8_MIN && disp <= INT8_MAX) {
+        mod = ENC_X86_64_MOD_DISP8;
     } else {
-        mod = 2;
+        mod = ENC_X86_64_MOD_DISP32;
     }
 
-    Enc_x86_64_Emit8((mod << 6) | ((reg & 7) << 3) | rm);
-    if (rm == (ASM_X86_64_REG_RSP & 7)) {
-        Enc_x86_64_Emit8(SIB_BASE_RSP);
+    Enc_x86_64_Emit8((mod << ENC_X86_64_MOD_SHIFT) | ((reg & ENC_X86_64_REG_MASK) << ENC_X86_64_REG_SHIFT) | rm);
+    if (rm == (ASM_X86_64_REG_RSP & ENC_X86_64_REG_MASK)) {
+        Enc_x86_64_Emit8(ENC_X86_64_SIB_BASE_RSP);
     }
-    if (mod == 1) {
+    if (mod == ENC_X86_64_MOD_DISP8) {
         Enc_x86_64_Emit8(disp & 0xFF);
-    } else if (mod == 2) {
+    } else if (mod == ENC_X86_64_MOD_DISP32) {
         Enc_x86_64_Emit32((unsigned int) disp);
     }
 }
@@ -162,11 +140,11 @@ void Enc_x86_64_EmitRR(int opcode, Asm_x86_64_Reg src, Asm_x86_64_Reg dst)
     Enc_x86_64_EmitModRR(src, dst);
 }
 
-// Emits a 0x81-group `<grp> $imm, %dst` with a 32-bit immediate.
+// Emits a group-1 `<grp> $imm, %dst` with a 32-bit immediate.
 void Enc_x86_64_EmitGrpImm(int grp, long imm, Asm_x86_64_Reg dst)
 {
     Enc_x86_64_EmitRexW(0, Enc_x86_64_RegHigh(dst));
-    Enc_x86_64_Emit8(0x81);
+    Enc_x86_64_Emit8(ENC_X86_64_OPCODE_GRP1_RM_IMM32);
     Enc_x86_64_EmitModRR(grp, dst);
     Enc_x86_64_Emit32((unsigned int) imm);
 }
@@ -176,12 +154,12 @@ void Enc_x86_64_EmitMovImm(long imm, Asm_x86_64_Reg dst)
 {
     if (imm >= INT32_MIN && imm <= INT32_MAX) {
         Enc_x86_64_EmitRexW(0, Enc_x86_64_RegHigh(dst));
-        Enc_x86_64_Emit8(0xC7);
+        Enc_x86_64_Emit8(ENC_X86_64_OPCODE_MOV_RM_IMM32);
         Enc_x86_64_EmitModRR(0, dst);
         Enc_x86_64_Emit32((unsigned int) imm);
     } else {
         Enc_x86_64_EmitRexW(0, Enc_x86_64_RegHigh(dst));
-        Enc_x86_64_Emit8(0xB8 + (dst & 7));
+        Enc_x86_64_Emit8(ENC_X86_64_OPCODE_MOV_R_IMM64 + (dst & ENC_X86_64_REG_MASK));
         Enc_x86_64_Emit64((unsigned long long) imm);
     }
 }
@@ -189,15 +167,15 @@ void Enc_x86_64_EmitMovImm(long imm, Asm_x86_64_Reg dst)
 // Emits a REX prefix when the operand width or the registers chosen require one.
 void Enc_x86_64_EmitRex(int width, Asm_x86_64_Reg reg, Asm_x86_64_Reg rm)
 {
-    int bits = (width == 64 ? REX_W : 0)
-             | (Enc_x86_64_RegHigh(reg) ? REX_R : 0)
-             | (Enc_x86_64_RegHigh(rm) ? REX_B : 0);
+    int bits = (width == 64 ? ENC_X86_64_REX_W : 0)
+             | (Enc_x86_64_RegHigh(reg) ? ENC_X86_64_REX_R : 0)
+             | (Enc_x86_64_RegHigh(rm) ? ENC_X86_64_REX_B : 0);
 
     // %spl, %bpl, %sil and %dil are only reachable through a REX prefix.
     int lowbyte = width == 8 && reg >= ASM_X86_64_REG_RSP && reg < ASM_X86_64_REG_R8;
 
     if (bits || lowbyte) {
-        Enc_x86_64_Emit8(REX_BASE | bits);
+        Enc_x86_64_Emit8(ENC_X86_64_REX_BASE | bits);
     }
 }
 
@@ -205,11 +183,11 @@ void Enc_x86_64_EmitRex(int width, Asm_x86_64_Reg reg, Asm_x86_64_Reg rm)
 void Enc_x86_64_EmitMovImm8(long imm, Asm_x86_64_Reg dst)
 {
     if (dst >= ASM_X86_64_REG_R8) {
-        Enc_x86_64_Emit8(REX_BASE | REX_B);
+        Enc_x86_64_Emit8(ENC_X86_64_REX_BASE | ENC_X86_64_REX_B);
     } else if (dst >= ASM_X86_64_REG_RSP) {
-        Enc_x86_64_Emit8(REX_BASE);
+        Enc_x86_64_Emit8(ENC_X86_64_REX_BASE);
     }
-    Enc_x86_64_Emit8(0xB0 + (dst & 7));
+    Enc_x86_64_Emit8(ENC_X86_64_OPCODE_MOV_R8_IMM8 + (dst & ENC_X86_64_REG_MASK));
     Enc_x86_64_Emit8(imm & 0xFF);
 }
 
@@ -229,10 +207,10 @@ void Enc_x86_64_EmitMovsx(const Asm_x86_64_Item *item)
 
     Enc_x86_64_EmitRexW(Enc_x86_64_RegHigh(dst), Enc_x86_64_RegHigh(src));
     if (item->ai_src.ao_width == 8) {
-        Enc_x86_64_Emit8(0x0F);
-        Enc_x86_64_Emit8(0xBE);
+        Enc_x86_64_Emit8(ENC_X86_64_OPCODE_ESCAPE);
+        Enc_x86_64_Emit8(ENC_X86_64_OPCODE2_MOVSX_R_RM8);
     } else {
-        Enc_x86_64_Emit8(0x63);
+        Enc_x86_64_Emit8(ENC_X86_64_OPCODE_MOVSXD_R_RM32);
     }
     if (item->ai_src.ao_kind == ASM_X86_64_OPERAND_REG) {
         Enc_x86_64_EmitModRR(dst, src);
@@ -245,17 +223,17 @@ void Enc_x86_64_EmitMovsx(const Asm_x86_64_Item *item)
 void Enc_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label)
 {
     Enc_x86_64_EmitRexW(Enc_x86_64_RegHigh(dst), 0);
-    Enc_x86_64_Emit8(0x8D);
-    Enc_x86_64_Emit8(((dst & 7) << 3) | 5);
+    Enc_x86_64_Emit8(ENC_X86_64_OPCODE_LEA_R_M);
+    Enc_x86_64_Emit8((ENC_X86_64_MOD_INDIRECT << ENC_X86_64_MOD_SHIFT) | ((dst & ENC_X86_64_REG_MASK) << ENC_X86_64_REG_SHIFT) | ENC_X86_64_RM_RIP);
     Enc_x86_64_RecordFixup(label, R_X86_64_PC32);
     Enc_x86_64_Emit32(0);
 }
 
-// Emits a 0xF7-group unary instruction `<grp> %reg`.
+// Emits a group-3 unary instruction `<grp> %reg`.
 void Enc_x86_64_EmitGrpUnary(int grp, Asm_x86_64_Reg reg)
 {
     Enc_x86_64_EmitRexW(0, Enc_x86_64_RegHigh(reg));
-    Enc_x86_64_Emit8(0xF7);
+    Enc_x86_64_Emit8(ENC_X86_64_OPCODE_GRP3_RM);
     Enc_x86_64_EmitModRR(grp, reg);
 }
 
@@ -263,11 +241,11 @@ void Enc_x86_64_EmitGrpUnary(int grp, Asm_x86_64_Reg reg)
 void Enc_x86_64_EmitSetcc(int opcode, Asm_x86_64_Reg reg)
 {
     if (reg >= ASM_X86_64_REG_R8) {
-        Enc_x86_64_Emit8(REX_BASE | REX_B);
+        Enc_x86_64_Emit8(ENC_X86_64_REX_BASE | ENC_X86_64_REX_B);
     } else if (reg >= ASM_X86_64_REG_RSP) {
-        Enc_x86_64_Emit8(REX_BASE);
+        Enc_x86_64_Emit8(ENC_X86_64_REX_BASE);
     }
-    Enc_x86_64_Emit8(0x0F);
+    Enc_x86_64_Emit8(ENC_X86_64_OPCODE_ESCAPE);
     Enc_x86_64_Emit8(opcode);
     Enc_x86_64_EmitModRR(0, reg);
 }
@@ -277,18 +255,18 @@ void Enc_x86_64_EmitBranch(const Asm_x86_64_Item *item)
 {
     switch (item->ai_op) {
         case ASM_X86_64_OP_JMP: {
-            Enc_x86_64_Emit8(0xE9);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_JMP_REL32);
         } break;
         case ASM_X86_64_OP_CALL: {
-            Enc_x86_64_Emit8(0xE8);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_CALL_REL32);
         } break;
         case ASM_X86_64_OP_JE: {
-            Enc_x86_64_Emit8(0x0F);
-            Enc_x86_64_Emit8(0x84);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_ESCAPE);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE2_JE_REL32);
         } break;
         case ASM_X86_64_OP_JNE: {
-            Enc_x86_64_Emit8(0x0F);
-            Enc_x86_64_Emit8(0x85);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_ESCAPE);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE2_JNE_REL32);
         } break;
         default: {
             // empty
@@ -316,15 +294,15 @@ void Enc_x86_64_EmitMov(const Asm_x86_64_Item *item)
             }
         } break;
         case ASM_X86_64_OPERAND_MEM: {
-            Enc_x86_64_EmitMemForm(0x8B, dst, item->ai_src.ao_reg, item->ai_src.ao_disp, 64);
+            Enc_x86_64_EmitMemForm(ENC_X86_64_OPCODE_MOV_R_RM, dst, item->ai_src.ao_reg, item->ai_src.ao_disp, 64);
         } break;
         case ASM_X86_64_OPERAND_REG: {
             if (item->ai_dst.ao_kind == ASM_X86_64_OPERAND_MEM) {
                 int width  = item->ai_src.ao_width;
-                int opcode = width == 8 ? 0x88 : 0x89;
+                int opcode = width == 8 ? ENC_X86_64_OPCODE_MOV_RM8_R8 : ENC_X86_64_OPCODE_MOV_RM_R;
                 Enc_x86_64_EmitMemForm(opcode, src, item->ai_dst.ao_reg, item->ai_dst.ao_disp, width);
             } else {
-                Enc_x86_64_EmitRR(0x89, src, dst);
+                Enc_x86_64_EmitRR(ENC_X86_64_OPCODE_MOV_RM_R, src, dst);
             }
         } break;
         default: {
@@ -346,29 +324,29 @@ void Enc_x86_64_EmitInstr(const Asm_x86_64_Item *item)
         } break;
         case ASM_X86_64_OP_ADD: {
             if (imm) {
-                Enc_x86_64_EmitGrpImm(GRP_ADD, item->ai_src.ao_imm, dst);
+                Enc_x86_64_EmitGrpImm(ENC_X86_64_GRP_ADD, item->ai_src.ao_imm, dst);
             } else {
-                Enc_x86_64_EmitRR(0x01, src, dst);
+                Enc_x86_64_EmitRR(ENC_X86_64_OPCODE_ADD_RM_R, src, dst);
             }
         } break;
         case ASM_X86_64_OP_SUB: {
             if (imm) {
-                Enc_x86_64_EmitGrpImm(GRP_SUB, item->ai_src.ao_imm, dst);
+                Enc_x86_64_EmitGrpImm(ENC_X86_64_GRP_SUB, item->ai_src.ao_imm, dst);
             } else {
-                Enc_x86_64_EmitRR(0x29, src, dst);
+                Enc_x86_64_EmitRR(ENC_X86_64_OPCODE_SUB_RM_R, src, dst);
             }
         } break;
         case ASM_X86_64_OP_CMP: {
             if (imm) {
-                Enc_x86_64_EmitGrpImm(GRP_CMP, item->ai_src.ao_imm, dst);
+                Enc_x86_64_EmitGrpImm(ENC_X86_64_GRP_CMP, item->ai_src.ao_imm, dst);
             } else {
-                Enc_x86_64_EmitRR(0x39, src, dst);
+                Enc_x86_64_EmitRR(ENC_X86_64_OPCODE_CMP_RM_R, src, dst);
             }
         } break;
         case ASM_X86_64_OP_IMUL: {
             Enc_x86_64_EmitRexW(Enc_x86_64_RegHigh(dst), Enc_x86_64_RegHigh(src));
-            Enc_x86_64_Emit8(0x0F);
-            Enc_x86_64_Emit8(0xAF);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_ESCAPE);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE2_IMUL_R_RM);
             Enc_x86_64_EmitModRR(dst, src);
         } break;
         case ASM_X86_64_OP_MOV: {
@@ -378,48 +356,48 @@ void Enc_x86_64_EmitInstr(const Asm_x86_64_Item *item)
             if (item->ai_src.ao_kind == ASM_X86_64_OPERAND_RIP) {
                 Enc_x86_64_EmitLeaRip(dst, item->ai_src.ao_label);
             } else {
-                Enc_x86_64_EmitMemForm(0x8D, dst, item->ai_src.ao_reg, item->ai_src.ao_disp, 64);
+                Enc_x86_64_EmitMemForm(ENC_X86_64_OPCODE_LEA_R_M, dst, item->ai_src.ao_reg, item->ai_src.ao_disp, 64);
             }
         } break;
         case ASM_X86_64_OP_IDIV: {
-            Enc_x86_64_EmitGrpUnary(GRP_IDIV, dst);
+            Enc_x86_64_EmitGrpUnary(ENC_X86_64_GRP_IDIV, dst);
         } break;
         case ASM_X86_64_OP_NEG: {
-            Enc_x86_64_EmitGrpUnary(GRP_NEG, dst);
+            Enc_x86_64_EmitGrpUnary(ENC_X86_64_GRP_NEG, dst);
         } break;
         case ASM_X86_64_OP_CQO: {
-            Enc_x86_64_Emit8(REX_BASE | REX_W);
-            Enc_x86_64_Emit8(0x99);
+            Enc_x86_64_Emit8(ENC_X86_64_REX_BASE | ENC_X86_64_REX_W);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_CQO);
         } break;
         case ASM_X86_64_OP_SETE: {
-            Enc_x86_64_EmitSetcc(0x94, dst);
+            Enc_x86_64_EmitSetcc(ENC_X86_64_OPCODE2_SETE, dst);
         } break;
         case ASM_X86_64_OP_SETNE: {
-            Enc_x86_64_EmitSetcc(0x95, dst);
+            Enc_x86_64_EmitSetcc(ENC_X86_64_OPCODE2_SETNE, dst);
         } break;
         case ASM_X86_64_OP_SETL: {
-            Enc_x86_64_EmitSetcc(0x9C, dst);
+            Enc_x86_64_EmitSetcc(ENC_X86_64_OPCODE2_SETL, dst);
         } break;
         case ASM_X86_64_OP_SETLE: {
-            Enc_x86_64_EmitSetcc(0x9E, dst);
+            Enc_x86_64_EmitSetcc(ENC_X86_64_OPCODE2_SETLE, dst);
         } break;
         case ASM_X86_64_OP_MOVZB: {
             Enc_x86_64_EmitRexW(Enc_x86_64_RegHigh(dst), Enc_x86_64_RegHigh(src));
-            Enc_x86_64_Emit8(0x0F);
-            Enc_x86_64_Emit8(0xB6);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_ESCAPE);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE2_MOVZX_R_RM8);
             Enc_x86_64_EmitModRR(dst, src);
         } break;
         case ASM_X86_64_OP_PUSH: {
             if (dst >= ASM_X86_64_REG_R8) {
-                Enc_x86_64_Emit8(REX_BASE | REX_B);
+                Enc_x86_64_Emit8(ENC_X86_64_REX_BASE | ENC_X86_64_REX_B);
             }
-            Enc_x86_64_Emit8(0x50 + (dst & 7));
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_PUSH_R + (dst & ENC_X86_64_REG_MASK));
         } break;
         case ASM_X86_64_OP_POP: {
             if (dst >= ASM_X86_64_REG_R8) {
-                Enc_x86_64_Emit8(REX_BASE | REX_B);
+                Enc_x86_64_Emit8(ENC_X86_64_REX_BASE | ENC_X86_64_REX_B);
             }
-            Enc_x86_64_Emit8(0x58 + (dst & 7));
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_POP_R + (dst & ENC_X86_64_REG_MASK));
         } break;
         case ASM_X86_64_OP_JMP:
         case ASM_X86_64_OP_JE:
@@ -428,11 +406,11 @@ void Enc_x86_64_EmitInstr(const Asm_x86_64_Item *item)
             Enc_x86_64_EmitBranch(item);
         } break;
         case ASM_X86_64_OP_RET: {
-            Enc_x86_64_Emit8(0xC3);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_RET);
         } break;
         case ASM_X86_64_OP_SYSCALL: {
-            Enc_x86_64_Emit8(0x0F);
-            Enc_x86_64_Emit8(0x05);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE_ESCAPE);
+            Enc_x86_64_Emit8(ENC_X86_64_OPCODE2_SYSCALL);
         } break;
     }
 }
