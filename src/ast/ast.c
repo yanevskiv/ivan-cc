@@ -12,6 +12,15 @@ Ast_Type Ast_TypeVoid = { AST_TYPE_KIND_VOID, AST_TYPE_SIZE_VOID, AST_TYPE_ALIGN
 Ast_Type Ast_TypeChar = { AST_TYPE_KIND_CHAR, AST_TYPE_SIZE_CHAR, AST_TYPE_ALIGN_CHAR, NULL, 0 };
 Ast_Type Ast_TypeInt  = { AST_TYPE_KIND_INT,  AST_TYPE_SIZE_INT,  AST_TYPE_ALIGN_INT,  NULL, 0 };
 
+// Table of interned string literals, indexed by AST_NODE_KIND_STR slot.
+static Ast_Str Ast_Strings[MAX_STRINGS];
+
+// Number of entries currently used in Ast_Strings.
+static int Ast_NumStrings;
+
+// Locals of the function currently being parsed.
+static Ast_Var *Ast_Locals;
+
 // Builds the pointer type that points at base.
 Ast_Type *Ast_NewPointer(Ast_Type *base)
 {
@@ -33,26 +42,6 @@ Ast_Type *Ast_NewArray(Ast_Type *base, int len)
     type->at_base  = base;
     type->at_len   = len;
     return type;
-}
-
-// Table of interned string literals, indexed by AST_NODE_KIND_STR slot.
-static Ast_Str Ast_Strings[MAX_STRINGS];
-
-// Number of entries currently used in Ast_Strings.
-static int Ast_NumStrings;
-
-// Locals of the function currently being parsed.
-static Ast_Var *Ast_Locals;
-
-// Interns a decoded string literal of len bytes and returns its table slot.
-int Ast_AddString(char *str, int len)
-{
-    if (Ast_NumStrings >= MAX_STRINGS) {
-        Show_Error("too many string literals (max %d)", MAX_STRINGS);
-    }
-    Ast_Strings[Ast_NumStrings].as_data = str;
-    Ast_Strings[Ast_NumStrings].as_len  = len;
-    return Ast_NumStrings++;
 }
 
 // Allocates a zeroed node of the given kind.
@@ -134,6 +123,17 @@ Ast_Var *Ast_DeclareVar(const char *name, Ast_Type *type, int line)
 Ast_Var *Ast_CurrentLocals(void)
 {
     return Ast_Locals;
+}
+
+// Interns a decoded string literal of len bytes and returns its table slot.
+int Ast_AddString(char *str, int len)
+{
+    if (Ast_NumStrings >= MAX_STRINGS) {
+        Show_Error("too many string literals (max %d)", MAX_STRINGS);
+    }
+    Ast_Strings[Ast_NumStrings].as_data = str;
+    Ast_Strings[Ast_NumStrings].as_len  = len;
+    return Ast_NumStrings++;
 }
 
 // Returns the number of interned string literals.

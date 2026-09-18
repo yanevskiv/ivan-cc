@@ -42,6 +42,10 @@
   header, unless another module genuinely needs one (`Ast_Program`).
 - A `.c` file defines things in the same order its header declares them, so
   the two can be read side by side.
+- A `.c` file is laid out in this order: includes, defines, enums, structs,
+  global variables, static global variables, function definitions. Defines,
+  enums and structs belong in the header where they can be, so most `.c`
+  files start at the variables.
 
 ## Comments
 
