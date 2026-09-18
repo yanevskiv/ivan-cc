@@ -31,7 +31,7 @@ Checklist toward ISO C99.
 - [ ] `volatile` qualifier
 - [ ] `restrict` qualifier
 - [x] pointer declarators (`int *p`, any number of stars)
-- [ ] array declarators, incl. multi-dimensional (`[N][M]`)
+- [x] array declarators, incl. multi-dimensional (`[N][M]`)
 - [ ] function-pointer declarators
 - [ ] `struct`
 - [ ] `union`
@@ -64,14 +64,14 @@ Checklist toward ISO C99.
 - [ ] increment / decrement: `++ --` (prefix and postfix)
 - [ ] ternary `?:`
 - [ ] comma operator
-- [x] assignment `=` (lvalue must be a plain variable today)
-- [ ] address-of `&` (unary)
-- [ ] dereference `*` (unary)
-- [ ] array subscript `a[i]`
+- [x] assignment `=` (to a variable, `*p`, or `a[i]`)
+- [x] address-of `&` (unary)
+- [x] dereference `*` (unary)
+- [x] array subscript `a[i]`
 - [ ] struct/union member access `.` and `->`
 - [ ] call through a function pointer
-- [ ] `sizeof` (type and expression forms)
-- [ ] cast expressions (`(T) expr`)
+- [x] `sizeof` (type and expression forms)
+- [x] cast expressions (`(T) expr`)
 - [x] function calls, fixed arity
 - [ ] compound literals in expression position
 - [x] parenthesized expressions
