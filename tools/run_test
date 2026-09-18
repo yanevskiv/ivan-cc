@@ -44,13 +44,32 @@ get_value()
         | head -n 1
 }
 
-# Compile the test, run it, and check its status against `// (Test) Return:`.
-do_test()
+# Create the work directory, then compile and run the test, recording both
+# exit statuses for the checks below to judge.
+setup()
 {
     [ -n "$SOURCE" ] || error "no test file given"
     [ -f "$SOURCE" ] || error "no such file: $SOURCE"
     [ -x "$COMPILER" ] || error "compiler not executable: $COMPILER"
 
+    WORK_DIR=$(mktemp -d) || error "cannot create a temporary directory"
+    trap 'rm -rf "$WORK_DIR"' EXIT INT TERM
+    BINARY=$WORK_DIR/a.out
+    COMPILE_ERR=$WORK_DIR/compile.err
+    STATUS=0
+
+    "$COMPILER" "$SOURCE" -o "$BINARY" >"$COMPILE_ERR" 2>&1
+    COMPILE_STATUS=$?
+
+    if [ "$COMPILE_STATUS" -eq 0 ]; then
+        timeout "$TIMEOUT" "$BINARY" >/dev/null 2>&1
+        STATUS=$?
+    fi
+}
+
+# Check the run against `// (Test) Return:`.
+test_return()
+{
     EXPECT=$(get_value 'return')
 
     [ -n "$EXPECT" ] || fail "No expectation declared"
@@ -58,28 +77,20 @@ do_test()
     case $EXPECT in
         *[!0-9]*) fail "Return expects a number between 0 and 255, got '$EXPECT'" ;;
     esac
-
     [ "$EXPECT" -le 255 ] || fail "Return expects a number between 0 and 255, got '$EXPECT'"
 
-    WORK_DIR=$(mktemp -d) || error "cannot create a temporary directory"
-    trap 'rm -rf "$WORK_DIR"' EXIT INT TERM
-
-    BINARY="$WORK_DIR/a.out"
-    COMPILE_ERR="$WORK_DIR/compile.err"
-
-    "$COMPILER" "$SOURCE" -o "$BINARY" >"$COMPILE_ERR" 2>&1 || fail "Compilation failed\n$(cat "$COMPILE_ERR")"
-
-    timeout "$TIMEOUT" "$BINARY" >/dev/null 2>&1
-
-    STATUS=$?
+    [ "$COMPILE_STATUS" -eq 0 ] || fail "Compilation failed
+$(cat "$COMPILE_ERR")"
 
     # Checked before the signal cases below, which a status of 204 is otherwise
     # indistinguishable from.
     [ "$STATUS" -ne "$EXPECT" ] || pass
+
     [ "$STATUS" -ne 124 ] || fail "Timed out after ${TIMEOUT}s"
     [ "$STATUS" -le 128 ] || fail "Died from signal $((STATUS - 128)), expected to return $EXPECT"
 
     fail "Returned $STATUS but expected $EXPECT"
 }
 
-do_test
+setup
+test_return
