@@ -66,6 +66,12 @@ int Gen_x86_64_AlignTo(int n, int align)
     return (n + align - 1) / align * align;
 }
 
+// Returns the operand width in bits used to load or store a value of type.
+int Gen_x86_64_TypeWidth(const Ast_Type *type)
+{
+    return type->at_size * 8;
+}
+
 // Computes the address of an lvalue into %rax.
 void Gen_x86_64_EmitAddr(Ast_Node *node)
 {
@@ -116,15 +122,17 @@ void Gen_x86_64_EmitExpr(Ast_Node *node)
             Asm_x86_64_EmitLeaRip(ASM_X86_64_REG_RAX, ".Lstr%d", node->an_str_idx);
         } break;
         case AST_NODE_KIND_VAR: {
+            int width = Gen_x86_64_TypeWidth(node->an_type);
             Gen_x86_64_EmitAddr(node);
-            Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RAX, 0, ASM_X86_64_REG_RAX);
+            Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RAX, 0, ASM_X86_64_REG_RAX, width);
         } break;
         case AST_NODE_KIND_ASSIGN: {
             Gen_x86_64_EmitAddr(node->an_lhs);
             Gen_x86_64_EmitPush();
             Gen_x86_64_EmitExpr(node->an_rhs);
             Gen_x86_64_EmitPop(ASM_X86_64_REG_RDI);
-            Asm_x86_64_EmitMovStore(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RDI, 0);
+            Asm_x86_64_EmitMovStore(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RDI, 0,
+                                    Gen_x86_64_TypeWidth(node->an_type));
         } break;
         case AST_NODE_KIND_NEG: {
             Gen_x86_64_EmitExpr(node->an_lhs);
@@ -304,7 +312,8 @@ void Gen_x86_64_AssignLvarOffsets(Ast_Func *func)
 {
     int offset = 0;
     for (Ast_Var *var = func->af_locals; var; var = var->av_next) {
-        offset += WORD_SIZE;
+        offset += var->av_type->at_size;
+        offset = Gen_x86_64_AlignTo(offset, var->av_type->at_align);
         var->av_offset = -offset;
     }
     func->af_stack_size = Gen_x86_64_AlignTo(offset, STACK_ALIGN);
@@ -345,12 +354,13 @@ void Gen_x86_64_EmitFunctions(Ast_Func *prog)
         // spill incoming parameters
         int i = 0;
         for (Ast_Var *param = func->af_params; param; param = param->av_param_next) {
+            int width = Gen_x86_64_TypeWidth(param->av_type);
             if (i < MAX_REG_ARGS) {
-                Asm_x86_64_EmitMovStore(Gen_x86_64_ArgReg[i], ASM_X86_64_REG_RBP, param->av_offset);
+                Asm_x86_64_EmitMovStore(Gen_x86_64_ArgReg[i], ASM_X86_64_REG_RBP, param->av_offset, width);
             } else {
                 int off = 2 * WORD_SIZE + (i - MAX_REG_ARGS) * WORD_SIZE;
-                Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RBP, off, ASM_X86_64_REG_RAX);
-                Asm_x86_64_EmitMovStore(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RBP, param->av_offset);
+                Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RBP, off, ASM_X86_64_REG_RAX, 64);
+                Asm_x86_64_EmitMovStore(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RBP, param->av_offset, width);
             }
             i++;
         }

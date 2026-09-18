@@ -47,9 +47,16 @@ static const char *Txt_x86_64_Reg8Name[16] = {
     "r15b"
 };
 
+// 32-bit register names, indexed by Asm_x86_64_Reg.
+static const char *Txt_x86_64_Reg32Name[16] = {
+    "eax", "ecx", "edx",  "ebx",  "esp",  "ebp",  "esi",  "edi",
+    "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"
+};
+
 // Mnemonics, indexed by Asm_x86_64_Op.
 static const char *Txt_x86_64_OpName[] = {
     [ASM_X86_64_OP_MOV]     = "mov",
+    [ASM_X86_64_OP_MOVSX]   = "movs",
     [ASM_X86_64_OP_LEA]     = "lea",
     [ASM_X86_64_OP_PUSH]    = "push",
     [ASM_X86_64_OP_POP]     = "pop",
@@ -78,8 +85,12 @@ void Txt_x86_64_Att_WriteOperand(FILE *out, const Asm_x86_64_Operand *op)
 {
     switch (op->ao_kind) {
         case ASM_X86_64_OPERAND_REG: {
-            const char *name = op->ao_width == 8 ? Txt_x86_64_Reg8Name[op->ao_reg]
-                                                 : Txt_x86_64_Reg64Name[op->ao_reg];
+            const char *name = Txt_x86_64_Reg64Name[op->ao_reg];
+            if (op->ao_width == 8) {
+                name = Txt_x86_64_Reg8Name[op->ao_reg];
+            } else if (op->ao_width == 32) {
+                name = Txt_x86_64_Reg32Name[op->ao_reg];
+            }
             fprintf(out, "%%%s", name);
         } break;
         case ASM_X86_64_OPERAND_IMM: {
@@ -107,7 +118,11 @@ void Txt_x86_64_Att_WriteOperand(FILE *out, const Asm_x86_64_Operand *op)
 // Writes one instruction: mnemonic plus operands in AT&T order.
 void Txt_x86_64_Att_WriteInstr(FILE *out, const Asm_x86_64_Item *item)
 {
-    fprintf(out, "  %s", Txt_x86_64_OpName[item->ai_op]);
+    if (item->ai_op == ASM_X86_64_OP_MOVSX) {
+        fprintf(out, "  movs%cq", item->ai_src.ao_width == 8 ? 'b' : 'l');
+    } else {
+        fprintf(out, "  %s", Txt_x86_64_OpName[item->ai_op]);
+    }
 
     int have_src = item->ai_src.ao_kind != ASM_X86_64_OPERAND_NONE;
     int have_dst = item->ai_dst.ao_kind != ASM_X86_64_OPERAND_NONE;
@@ -164,6 +179,10 @@ int Txt_x86_64_RegByName(const char *name, int *width)
             *width = 64;
             return i;
         }
+        if (strcmp(name, Txt_x86_64_Reg32Name[i]) == 0) {
+            *width = 32;
+            return i;
+        }
         if (strcmp(name, Txt_x86_64_Reg8Name[i]) == 0) {
             *width = 8;
             return i;
@@ -196,7 +215,7 @@ int Txt_x86_64_Att_ParseOperand(const char *text, Asm_x86_64_Operand *op)
         if (reg < 0) {
             return 0;
         }
-        *op = width == 8 ? Asm_x86_64_Reg8(reg) : Asm_x86_64_Reg64(reg);
+        *op = Asm_x86_64_RegWidth(reg, width);
         return 1;
     }
     if (text[0] == '$' && Str_RegexExtract(text, "^[$](-?(0[xX][0-9A-Fa-f]+|[0-9]+))$", g, 1)) {
@@ -276,8 +295,16 @@ void Txt_x86_64_Att_ParseInstr(const char *line)
     memcpy(mnem, line, mlen);
     mnem[mlen] = '\0';
 
+    // movsbq / movslq name their source width, so they resolve before the rest.
+    int movsx_width = 0;
+    if (Str_Equals(mnem, "movsbq")) {
+        movsx_width = 8;
+    } else if (Str_Equals(mnem, "movslq")) {
+        movsx_width = 32;
+    }
+
     // Accept an AT&T size suffix (movq, pushq, movzbl) by retrying without it.
-    int op = Txt_x86_64_OpByName(mnem);
+    int op = movsx_width ? ASM_X86_64_OP_MOVSX : Txt_x86_64_OpByName(mnem);
     if (op < 0 && mlen >= 2 && strchr("bwlq", mnem[mlen - 1])) {
         mnem[mlen - 1] = '\0';
         op = Txt_x86_64_OpByName(mnem);
@@ -315,6 +342,9 @@ void Txt_x86_64_Att_ParseInstr(const char *line)
     if (nops == 2) {
         item->ai_src = ops[0];
         item->ai_dst = ops[1];
+        if (movsx_width) {
+            item->ai_src.ao_width = movsx_width;
+        }
     } else if (nops == 1) {
         item->ai_dst = ops[0];
     }

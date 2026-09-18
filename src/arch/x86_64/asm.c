@@ -29,6 +29,16 @@ Asm_x86_64_Operand Asm_x86_64_Reg8(Asm_x86_64_Reg reg)
     };
 }
 
+// Makes a register operand of the given width in bits.
+Asm_x86_64_Operand Asm_x86_64_RegWidth(Asm_x86_64_Reg reg, int width)
+{
+    return (Asm_x86_64_Operand) {
+        .ao_kind = ASM_X86_64_OPERAND_REG,
+        .ao_reg = reg,
+        .ao_width = width
+    };
+}
+
 // Makes an immediate operand ($val).
 Asm_x86_64_Operand Asm_x86_64_Imm(long val)
 {
@@ -306,22 +316,23 @@ void Asm_x86_64_EmitSubImm(long imm, Asm_x86_64_Reg dst)
     item->ai_src = Asm_x86_64_Imm(imm);
 }
 
-// Emits `mov disp(%base), %dst` (load from memory).
-void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst)
+// Emits a load of width bits from disp(%base) into the full 64-bit %dst.
+void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst, int width)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
-    item->ai_op  = ASM_X86_64_OP_MOV;
+    item->ai_op  = width == 64 ? ASM_X86_64_OP_MOV : ASM_X86_64_OP_MOVSX;
     item->ai_dst = Asm_x86_64_Reg64(dst);
     item->ai_src = Asm_x86_64_Mem(base, disp);
+    item->ai_src.ao_width = width;
 }
 
-// Emits `mov %src, disp(%base)` (store to memory).
-void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp)
+// Emits a store of the low width bits of %src to disp(%base).
+void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp, int width)
 {
     Asm_x86_64_Item *item = Asm_x86_64_New(ASM_X86_64_ITEM_INSTR);
     item->ai_op  = ASM_X86_64_OP_MOV;
     item->ai_dst = Asm_x86_64_Mem(base, disp);
-    item->ai_src = Asm_x86_64_Reg64(src);
+    item->ai_src = Asm_x86_64_RegWidth(src, width);
 }
 
 // Emits `lea disp(%base), %dst`.

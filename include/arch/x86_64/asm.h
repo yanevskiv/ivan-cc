@@ -28,6 +28,7 @@ enum Asm_x86_64_Reg {
 typedef enum Asm_x86_64_Op Asm_x86_64_Op;
 enum Asm_x86_64_Op {
     ASM_X86_64_OP_MOV = 0,
+    ASM_X86_64_OP_MOVSX,
     ASM_X86_64_OP_LEA,
     ASM_X86_64_OP_PUSH,
     ASM_X86_64_OP_POP,
@@ -104,6 +105,7 @@ struct Asm_x86_64_Item {
 // Operand constructors
 Asm_x86_64_Operand Asm_x86_64_Reg64(Asm_x86_64_Reg reg);
 Asm_x86_64_Operand Asm_x86_64_Reg8(Asm_x86_64_Reg reg);
+Asm_x86_64_Operand Asm_x86_64_RegWidth(Asm_x86_64_Reg reg, int width);
 Asm_x86_64_Operand Asm_x86_64_Imm(long val);
 Asm_x86_64_Operand Asm_x86_64_Mem(Asm_x86_64_Reg base, int disp);
 Asm_x86_64_Operand Asm_x86_64_Rip(const char *label);
@@ -148,8 +150,8 @@ void Asm_x86_64_EmitAddImm(long imm, Asm_x86_64_Reg dst);
 void Asm_x86_64_EmitSubImm(long imm, Asm_x86_64_Reg dst);
 
 // Memory loads, stores and addresses
-void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst);
-void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp);
+void Asm_x86_64_EmitMovLoad(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst, int width);
+void Asm_x86_64_EmitMovStore(Asm_x86_64_Reg src, Asm_x86_64_Reg base, int disp, int width);
 void Asm_x86_64_EmitLea(Asm_x86_64_Reg base, int disp, Asm_x86_64_Reg dst);
 void Asm_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label, ...);
 

@@ -189,6 +189,21 @@ void Enc_x86_64_MovImm(long imm, Asm_x86_64_Reg dst)
     }
 }
 
+// Emits a REX prefix when the operand width or the registers chosen require one.
+void Enc_x86_64_Rex(int width, Asm_x86_64_Reg reg, Asm_x86_64_Reg rm)
+{
+    int bits = (width == 64 ? REX_W : 0)
+             | (Enc_x86_64_RegHigh(reg) ? REX_R : 0)
+             | (Enc_x86_64_RegHigh(rm) ? REX_B : 0);
+
+    // %spl, %bpl, %sil and %dil are only reachable through a REX prefix.
+    int lowbyte = width == 8 && reg >= ASM_X86_64_REG_RSP && reg < ASM_X86_64_REG_R8;
+
+    if (bits || lowbyte) {
+        Enc_x86_64_Emit8(REX_BASE | bits);
+    }
+}
+
 // Emits `mov $imm, %dst` into an 8-bit register.
 void Enc_x86_64_MovImm8(long imm, Asm_x86_64_Reg dst)
 {
@@ -201,12 +216,28 @@ void Enc_x86_64_MovImm8(long imm, Asm_x86_64_Reg dst)
     Enc_x86_64_Emit8(imm & 0xFF);
 }
 
-// Emits `<opcode> disp(%base), %reg` (or the reverse for a store).
-void Enc_x86_64_MemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base, int disp)
+// Emits `<opcode> disp(%base), %reg` (or the reverse for a store) at width bits.
+void Enc_x86_64_MemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base, int disp, int width)
 {
-    Enc_x86_64_RexW(Enc_x86_64_RegHigh(reg), Enc_x86_64_RegHigh(base));
+    Enc_x86_64_Rex(width, reg, base);
     Enc_x86_64_Emit8(opcode);
     Enc_x86_64_Mem(reg, base, disp);
+}
+
+// Emits a sign-extending load `movs<w>q disp(%base), %dst`.
+void Enc_x86_64_Movsx(const Asm_x86_64_Item *item)
+{
+    Asm_x86_64_Reg dst  = item->ai_dst.ao_reg;
+    Asm_x86_64_Reg base = item->ai_src.ao_reg;
+
+    Enc_x86_64_RexW(Enc_x86_64_RegHigh(dst), Enc_x86_64_RegHigh(base));
+    if (item->ai_src.ao_width == 8) {
+        Enc_x86_64_Emit8(0x0F);
+        Enc_x86_64_Emit8(0xBE);
+    } else {
+        Enc_x86_64_Emit8(0x63);
+    }
+    Enc_x86_64_Mem(dst, base, item->ai_src.ao_disp);
 }
 
 // Emits `lea label(%rip), %dst` with a rel32 fixup to label.
@@ -284,11 +315,13 @@ void Enc_x86_64_Mov(const Asm_x86_64_Item *item)
             }
         } break;
         case ASM_X86_64_OPERAND_MEM: {
-            Enc_x86_64_MemForm(0x8B, dst, item->ai_src.ao_reg, item->ai_src.ao_disp);
+            Enc_x86_64_MemForm(0x8B, dst, item->ai_src.ao_reg, item->ai_src.ao_disp, 64);
         } break;
         case ASM_X86_64_OPERAND_REG: {
             if (item->ai_dst.ao_kind == ASM_X86_64_OPERAND_MEM) {
-                Enc_x86_64_MemForm(0x89, src, item->ai_dst.ao_reg, item->ai_dst.ao_disp);
+                int width  = item->ai_src.ao_width;
+                int opcode = width == 8 ? 0x88 : 0x89;
+                Enc_x86_64_MemForm(opcode, src, item->ai_dst.ao_reg, item->ai_dst.ao_disp, width);
             } else {
                 Enc_x86_64_RR(0x89, src, dst);
             }
@@ -307,6 +340,9 @@ void Enc_x86_64_Instr(const Asm_x86_64_Item *item)
     int     imm = item->ai_src.ao_kind == ASM_X86_64_OPERAND_IMM;
 
     switch (item->ai_op) {
+        case ASM_X86_64_OP_MOVSX: {
+            Enc_x86_64_Movsx(item);
+        } break;
         case ASM_X86_64_OP_ADD: {
             if (imm) {
                 Enc_x86_64_GrpImm(GRP_ADD, item->ai_src.ao_imm, dst);
@@ -341,7 +377,7 @@ void Enc_x86_64_Instr(const Asm_x86_64_Item *item)
             if (item->ai_src.ao_kind == ASM_X86_64_OPERAND_RIP) {
                 Enc_x86_64_LeaRip(dst, item->ai_src.ao_label);
             } else {
-                Enc_x86_64_MemForm(0x8D, dst, item->ai_src.ao_reg, item->ai_src.ao_disp);
+                Enc_x86_64_MemForm(0x8D, dst, item->ai_src.ao_reg, item->ai_src.ao_disp, 64);
             }
         } break;
         case ASM_X86_64_OP_IDIV: {
