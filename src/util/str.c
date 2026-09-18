@@ -127,14 +127,30 @@ char *Str_Unescape(const char *p, int len, int *out_len)
             continue;
         }
         switch (p[++i]) {
-            case 'n':  buf[n++] = '\n'; break;
-            case 't':  buf[n++] = '\t'; break;
-            case 'r':  buf[n++] = '\r'; break;
-            case '0':  buf[n++] = '\0'; break;
-            case '\\': buf[n++] = '\\'; break;
-            case '\'': buf[n++] = '\''; break;
-            case '"':  buf[n++] = '"';  break;
-            default:   buf[n++] = p[i]; break;
+            case 'n': {
+                buf[n++] = '\n';
+            } break;
+            case 't': {
+                buf[n++] = '\t';
+            } break;
+            case 'r': {
+                buf[n++] = '\r';
+            } break;
+            case '0': {
+                buf[n++] = '\0';
+            } break;
+            case '\\': {
+                buf[n++] = '\\';
+            } break;
+            case '\'': {
+                buf[n++] = '\'';
+            } break;
+            case '"': {
+                buf[n++] = '"';
+            } break;
+            default: {
+                buf[n++] = p[i];
+            } break;
         }
     }
 

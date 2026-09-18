@@ -244,11 +244,23 @@ void Enc_x86_64_Setcc(int opcode, Asm_x86_64_Reg reg)
 void Enc_x86_64_Branch(const Asm_x86_64_Item *item)
 {
     switch (item->ai_op) {
-        case ASM_X86_64_OP_JMP:  Enc_x86_64_Emit8(0xE9);                      break;
-        case ASM_X86_64_OP_CALL: Enc_x86_64_Emit8(0xE8);                      break;
-        case ASM_X86_64_OP_JE:   Enc_x86_64_Emit8(0x0F); Enc_x86_64_Emit8(0x84); break;
-        case ASM_X86_64_OP_JNE:  Enc_x86_64_Emit8(0x0F); Enc_x86_64_Emit8(0x85); break;
-        default: break;
+        case ASM_X86_64_OP_JMP: {
+            Enc_x86_64_Emit8(0xE9);
+        } break;
+        case ASM_X86_64_OP_CALL: {
+            Enc_x86_64_Emit8(0xE8);
+        } break;
+        case ASM_X86_64_OP_JE: {
+            Enc_x86_64_Emit8(0x0F);
+            Enc_x86_64_Emit8(0x84);
+        } break;
+        case ASM_X86_64_OP_JNE: {
+            Enc_x86_64_Emit8(0x0F);
+            Enc_x86_64_Emit8(0x85);
+        } break;
+        default: {
+            // empty
+        } break;
     }
     // A call may bind through the PLT; jmp/jcc are plain PC-relative.
     uint32_t type = item->ai_op == ASM_X86_64_OP_CALL ? R_X86_64_PLT32
@@ -281,7 +293,9 @@ void Enc_x86_64_Mov(const Asm_x86_64_Item *item)
                 Enc_x86_64_RR(0x89, src, dst);
             }
         } break;
-        default: break;
+        default: {
+            // empty
+        } break;
     }
 }
 
@@ -340,10 +354,18 @@ void Enc_x86_64_Instr(const Asm_x86_64_Item *item)
             Enc_x86_64_Emit8(REX_BASE | REX_W);
             Enc_x86_64_Emit8(0x99);
         } break;
-        case ASM_X86_64_OP_SETE:  { Enc_x86_64_Setcc(0x94, dst); } break;
-        case ASM_X86_64_OP_SETNE: { Enc_x86_64_Setcc(0x95, dst); } break;
-        case ASM_X86_64_OP_SETL:  { Enc_x86_64_Setcc(0x9C, dst); } break;
-        case ASM_X86_64_OP_SETLE: { Enc_x86_64_Setcc(0x9E, dst); } break;
+        case ASM_X86_64_OP_SETE: {
+            Enc_x86_64_Setcc(0x94, dst);
+        } break;
+        case ASM_X86_64_OP_SETNE: {
+            Enc_x86_64_Setcc(0x95, dst);
+        } break;
+        case ASM_X86_64_OP_SETL: {
+            Enc_x86_64_Setcc(0x9C, dst);
+        } break;
+        case ASM_X86_64_OP_SETLE: {
+            Enc_x86_64_Setcc(0x9E, dst);
+        } break;
         case ASM_X86_64_OP_MOVZB: {
             Enc_x86_64_RexW(Enc_x86_64_RegHigh(dst), Enc_x86_64_RegHigh(src));
             Enc_x86_64_Emit8(0x0F);
