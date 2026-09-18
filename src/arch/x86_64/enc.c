@@ -78,8 +78,7 @@ void Enc_x86_64_RecordLabel(const char *name)
 {
     if (Enc_x86_64_NumLabels == Enc_x86_64_CapLabels) {
         Enc_x86_64_CapLabels = Enc_x86_64_CapLabels ? Enc_x86_64_CapLabels * 2 : 64;
-        Enc_x86_64_Labels = realloc(Enc_x86_64_Labels,
-                                    Enc_x86_64_CapLabels * sizeof(*Enc_x86_64_Labels));
+        Enc_x86_64_Labels = realloc(Enc_x86_64_Labels, Enc_x86_64_CapLabels * sizeof(*Enc_x86_64_Labels));
     }
     Enc_x86_64_Labels[Enc_x86_64_NumLabels++] = (Enc_x86_64_Label) {
         .al_name = name,
@@ -93,8 +92,7 @@ void Enc_x86_64_RecordGlobl(const char *name)
 {
     if (Enc_x86_64_NumGlobls == Enc_x86_64_CapGlobls) {
         Enc_x86_64_CapGlobls = Enc_x86_64_CapGlobls ? Enc_x86_64_CapGlobls * 2 : 64;
-        Enc_x86_64_Globls = realloc(Enc_x86_64_Globls,
-                                    Enc_x86_64_CapGlobls * sizeof(*Enc_x86_64_Globls));
+        Enc_x86_64_Globls = realloc(Enc_x86_64_Globls, Enc_x86_64_CapGlobls * sizeof(*Enc_x86_64_Globls));
     }
     Enc_x86_64_Globls[Enc_x86_64_NumGlobls++] = name;
 }
@@ -104,8 +102,7 @@ void Enc_x86_64_RecordFixup(const char *name, uint32_t type)
 {
     if (Enc_x86_64_NumFixes == Enc_x86_64_CapFixes) {
         Enc_x86_64_CapFixes = Enc_x86_64_CapFixes ? Enc_x86_64_CapFixes * 2 : 64;
-        Enc_x86_64_Fixes = realloc(Enc_x86_64_Fixes,
-                                   Enc_x86_64_CapFixes * sizeof(*Enc_x86_64_Fixes));
+        Enc_x86_64_Fixes = realloc(Enc_x86_64_Fixes, Enc_x86_64_CapFixes * sizeof(*Enc_x86_64_Fixes));
     }
     Enc_x86_64_Fixes[Enc_x86_64_NumFixes++] = (Enc_x86_64_Fix) {
         .af_sec  = Enc_x86_64_Cur,

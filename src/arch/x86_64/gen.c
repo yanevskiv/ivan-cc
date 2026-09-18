@@ -165,8 +165,7 @@ void Gen_x86_64_EmitExpr(Ast_Node *node)
             Gen_x86_64_EmitPush();
             Gen_x86_64_EmitExpr(node->an_rhs);
             Gen_x86_64_EmitPop(ASM_X86_64_REG_RDI);
-            Asm_x86_64_EmitMovStore(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RDI, 0,
-                                    Gen_x86_64_TypeWidth(node->an_type));
+            Asm_x86_64_EmitMovStore(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RDI, 0, Gen_x86_64_TypeWidth(node->an_type));
         } break;
         case AST_NODE_KIND_NEG: {
             Gen_x86_64_EmitExpr(node->an_lhs);

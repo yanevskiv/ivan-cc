@@ -80,15 +80,13 @@ void Link_Merge(Elf *out, Elf *in)
         }
 
         if (sym->sym_bind == ELF_BIND_LOCAL) {
-            symmap[i] = Elf_SymbolAdd(out, sym->sym_name, dsec, value,
-                                      ELF_BIND_LOCAL, sym->sym_type);
+            symmap[i] = Elf_SymbolAdd(out, sym->sym_name, dsec, value, ELF_BIND_LOCAL, sym->sym_type);
             continue;
         }
 
         Elf_Sym *existing = Link_FindGlobal(out, sym->sym_name);
         if (! existing) {
-            symmap[i] = Elf_SymbolAdd(out, sym->sym_name, dsec, value,
-                                      sym->sym_bind, sym->sym_type);
+            symmap[i] = Elf_SymbolAdd(out, sym->sym_name, dsec, value, sym->sym_bind, sym->sym_type);
             continue;
         }
         if (dsec) {
@@ -111,8 +109,7 @@ void Link_Merge(Elf *out, Elf *in)
             if (k < 0) {
                 continue;
             }
-            Elf_RelaAdd(secmap[i], secbase[i] + rel->rel_offset, symmap[k],
-                        rel->rel_type, rel->rel_addend);
+            Elf_RelaAdd(secmap[i], secbase[i] + rel->rel_offset, symmap[k], rel->rel_type, rel->rel_addend);
         }
     }
 

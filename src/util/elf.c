@@ -291,8 +291,7 @@ Elf_Rela *Elf_RelaAdd(Elf_Sec *target, uint64_t offset, Elf_Sym *sym,
 {
     if (target->sec_nrelas == target->sec_caprelas) {
         target->sec_caprelas = target->sec_caprelas ? target->sec_caprelas * 2 : 8;
-        target->sec_relas = realloc(target->sec_relas,
-                                    target->sec_caprelas * sizeof(*target->sec_relas));
+        target->sec_relas = realloc(target->sec_relas, target->sec_caprelas * sizeof(*target->sec_relas));
     }
     Elf_Rela *rel = &target->sec_relas[target->sec_nrelas++];
     rel->rel_offset = offset;
@@ -711,8 +710,7 @@ Elf *Elf_ReadMem(const void *buf, size_t n)
         const char      *name = symstr + sym->st_name;
         Elf_Sec         *sec  = (sym->st_shndx != ELF_SHN_UNDEF && sym->st_shndx < shnum)
                                     ? secmap[sym->st_shndx] : NULL;
-        symmap[i] = Elf_SymbolAdd(elf, name, sec, sym->st_value,
-                                  ELF_ST_BIND(sym->st_info), ELF_ST_TYPE(sym->st_info));
+        symmap[i] = Elf_SymbolAdd(elf, name, sec, sym->st_value, ELF_ST_BIND(sym->st_info), ELF_ST_TYPE(sym->st_info));
         symmap[i]->sym_size  = sym->st_size;
         symmap[i]->sym_other = sym->st_other;
     }
@@ -731,8 +729,7 @@ Elf *Elf_ReadMem(const void *buf, size_t n)
         for (int r = 0; r < nrel; r++) {
             uint32_t si = ELF_R_SYM(rela[r].r_info);
             Elf_Sym *sym = (si < (uint32_t) nsyms) ? symmap[si] : NULL;
-            Elf_RelaAdd(target, rela[r].r_offset, sym,
-                        ELF_R_TYPE(rela[r].r_info), rela[r].r_addend);
+            Elf_RelaAdd(target, rela[r].r_offset, sym, ELF_R_TYPE(rela[r].r_info), rela[r].r_addend);
         }
     }
 
