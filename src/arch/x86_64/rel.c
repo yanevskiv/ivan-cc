@@ -25,7 +25,7 @@ void Rel_x86_64_PatchLE(Elf_Sec *sec, uint64_t offset, uint64_t value, int width
 void Rel_x86_64_One(Elf_Sec *sec, const Elf_Rela *rel)
 {
     uint64_t S = Rel_x86_64_SymbolAddr(rel->rel_sym);
-    int64_t  A = rel->rel_addend;
+    int64_t A = rel->rel_addend;
     uint64_t P = sec->sec_addr + rel->rel_offset;
 
     switch (rel->rel_type) {

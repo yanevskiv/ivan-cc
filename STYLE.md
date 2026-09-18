@@ -32,9 +32,14 @@
 - Negation is written `! x`, not `!x` — a bare `!` reads too easily as a
   typo or gets lost before a long expression.
 - Casts are written `(type) expr` with a space, not `(type)expr`.
-- Related consecutive declarations align their names/types/initializers in
-  columns when it doesn't hurt readability (see any struct definition or a
-  short run of assignments). Don't force alignment across unrelated lines.
+- Struct and enum members align their names/values in columns. Local
+  variables do not: declare each with a single space after its type.
+- Order local declarations shortest first, by the length of the type plus
+  the name, where the code allows it — `int x;`, then `char *hello;`, then
+  `unsigned long long big;`. A local that depends on an earlier one follows
+  it, and that wins over the length order.
+- `sizeof` always takes parentheses: `sizeof(int)`, `sizeof(*item)`,
+  `sizeof(buf)` — never `sizeof buf`.
 - Keep lines within roughly 100 columns. A function declaration or
   definition is the exception: it stays on one line however long it gets,
   never wrapped across two.

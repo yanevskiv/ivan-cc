@@ -194,7 +194,7 @@ int Txt_x86_64_RegByName(const char *name, int *width)
 // Returns the opcode for a mnemonic, or -1 if it names no instruction we encode.
 int Txt_x86_64_OpByName(const char *name)
 {
-    int count = (int) (sizeof Txt_x86_64_OpName / sizeof Txt_x86_64_OpName[0]);
+    int count = (int) (sizeof(Txt_x86_64_OpName) / sizeof(Txt_x86_64_OpName[0]));
     for (int i = 0; i < count; i++) {
         if (Txt_x86_64_OpName[i] && strcmp(name, Txt_x86_64_OpName[i]) == 0) {
             return i;
@@ -277,7 +277,7 @@ void Txt_x86_64_Att_EmitString(const char *args, int terminate)
     }
     p++;
 
-    int   len = 0;
+    int len = 0;
     char *buf = Str_Unescape(p, (int) strlen(p), &len);
 
     Asm_x86_64_EmitBytes(buf, len + (terminate ? 1 : 0));
@@ -355,8 +355,8 @@ void Txt_x86_64_Att_ParseDirective(const char *line)
 {
     size_t nlen = strcspn(line, " \t");
     char name[32];
-    if (nlen >= sizeof name) {
-        nlen = sizeof name - 1;
+    if (nlen >= sizeof(name)) {
+        nlen = sizeof(name) - 1;
     }
     memcpy(name, line, nlen);
     name[nlen] = '\0';

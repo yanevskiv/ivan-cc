@@ -79,7 +79,7 @@ Asm_x86_64_Operand Asm_x86_64_Target(const char *label)
 // Appends a fresh item of the given kind to the list and returns it.
 Asm_x86_64_Item *Asm_x86_64_New(Asm_x86_64_ItemKind kind)
 {
-    Asm_x86_64_Item *item = calloc(1, sizeof *item);
+    Asm_x86_64_Item *item = calloc(1, sizeof(*item));
     item->ai_kind = kind;
     if (Asm_x86_64_Tail) {
         Asm_x86_64_Tail->ai_next = item;

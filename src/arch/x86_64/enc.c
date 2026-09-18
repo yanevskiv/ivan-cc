@@ -79,7 +79,7 @@ void Enc_x86_64_RecordLabel(const char *name)
     if (Enc_x86_64_NumLabels == Enc_x86_64_CapLabels) {
         Enc_x86_64_CapLabels = Enc_x86_64_CapLabels ? Enc_x86_64_CapLabels * 2 : 64;
         Enc_x86_64_Labels = realloc(Enc_x86_64_Labels,
-                                    Enc_x86_64_CapLabels * sizeof *Enc_x86_64_Labels);
+                                    Enc_x86_64_CapLabels * sizeof(*Enc_x86_64_Labels));
     }
     Enc_x86_64_Labels[Enc_x86_64_NumLabels++] = (Enc_x86_64_Label) {
         .al_name = name,
@@ -94,7 +94,7 @@ void Enc_x86_64_RecordGlobl(const char *name)
     if (Enc_x86_64_NumGlobls == Enc_x86_64_CapGlobls) {
         Enc_x86_64_CapGlobls = Enc_x86_64_CapGlobls ? Enc_x86_64_CapGlobls * 2 : 64;
         Enc_x86_64_Globls = realloc(Enc_x86_64_Globls,
-                                    Enc_x86_64_CapGlobls * sizeof *Enc_x86_64_Globls);
+                                    Enc_x86_64_CapGlobls * sizeof(*Enc_x86_64_Globls));
     }
     Enc_x86_64_Globls[Enc_x86_64_NumGlobls++] = name;
 }
@@ -105,7 +105,7 @@ void Enc_x86_64_RecordFixup(const char *name, uint32_t type)
     if (Enc_x86_64_NumFixes == Enc_x86_64_CapFixes) {
         Enc_x86_64_CapFixes = Enc_x86_64_CapFixes ? Enc_x86_64_CapFixes * 2 : 64;
         Enc_x86_64_Fixes = realloc(Enc_x86_64_Fixes,
-                                   Enc_x86_64_CapFixes * sizeof *Enc_x86_64_Fixes);
+                                   Enc_x86_64_CapFixes * sizeof(*Enc_x86_64_Fixes));
     }
     Enc_x86_64_Fixes[Enc_x86_64_NumFixes++] = (Enc_x86_64_Fix) {
         .af_sec  = Enc_x86_64_Cur,
@@ -337,7 +337,7 @@ void Enc_x86_64_EmitInstr(const Asm_x86_64_Item *item)
 {
     Asm_x86_64_Reg dst = item->ai_dst.ao_reg;
     Asm_x86_64_Reg src = item->ai_src.ao_reg;
-    int     imm = item->ai_src.ao_kind == ASM_X86_64_OPERAND_IMM;
+    int imm = item->ai_src.ao_kind == ASM_X86_64_OPERAND_IMM;
 
     switch (item->ai_op) {
         case ASM_X86_64_OP_MOVSX: {
@@ -458,9 +458,9 @@ void Enc_x86_64_BuildSymbols(void)
 {
     for (size_t i = 0; i < Enc_x86_64_NumLabels; i++) {
         Enc_x86_64_Label *l = &Enc_x86_64_Labels[i];
-        int     global = Enc_x86_64_IsGlobl(l->al_name);
-        uint8_t bind   = global ? ELF_BIND_GLOBAL : ELF_BIND_LOCAL;
-        uint8_t type   = ELF_TYPE_NOTYPE;
+        int global = Enc_x86_64_IsGlobl(l->al_name);
+        uint8_t bind = global ? ELF_BIND_GLOBAL : ELF_BIND_LOCAL;
+        uint8_t type = ELF_TYPE_NOTYPE;
         if (global) {
             type = (l->al_sec->sec_flags & ELF_SHF_EXECINSTR) ? ELF_TYPE_FUNC
                                                               : ELF_TYPE_OBJECT;

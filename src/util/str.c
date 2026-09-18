@@ -90,7 +90,7 @@ Str_List Str_Split(const char *str, const char *sep)
         const char *hit = strstr(start, sep);
         size_t len = hit ? (size_t) (hit - start) : strlen(start);
 
-        list.sl_items = realloc(list.sl_items, (list.sl_count + 1) * sizeof *list.sl_items);
+        list.sl_items = realloc(list.sl_items, (list.sl_count + 1) * sizeof(*list.sl_items));
         list.sl_items[list.sl_count++] = strndup(start, len);
 
         if (! hit) {
@@ -115,8 +115,8 @@ void Str_ListFree(Str_List *list)
 // Decodes a quoted-string body into raw bytes, stopping at the closing quote.
 char *Str_Unescape(const char *p, int len, int *out_len)
 {
+    int n = 0;
     char *buf = malloc(len + 1);
-    int   n   = 0;
 
     for (int i = 0; i < len; i++) {
         if (p[i] == '"') {
@@ -184,7 +184,7 @@ int Str_RegexExtract(const char *str, const char *pattern, char **groups, int ng
         return 0;
     }
 
-    regmatch_t *match = calloc(ngroups + 1, sizeof *match);
+    regmatch_t *match = calloc(ngroups + 1, sizeof(*match));
     int ok = regexec(&re, str, ngroups + 1, match, 0) == 0;
     if (ok) {
         for (int i = 0; i < ngroups; i++) {

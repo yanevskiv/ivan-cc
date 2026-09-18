@@ -67,8 +67,8 @@ int main(int argc, char **argv)
 
     // ld's flags (-r, -place=) use the single-dash forms its roadmap spells
     // out, so the arguments are walked by hand rather than through getopt.
-    const char **objs = calloc(argc, sizeof *objs);
-    int          nobjs = 0;
+    int nobjs = 0;
+    const char **objs = calloc(argc, sizeof(*objs));
 
     for (int i = 1; i < argc; i++) {
         const char *arg = argv[i];

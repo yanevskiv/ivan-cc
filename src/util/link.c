@@ -50,9 +50,9 @@ void Link_Merge(Elf *out, Elf *in)
     size_t nsec = Elf_SectionCount(in);
     size_t nsym = Elf_SymbolCount(in);
 
-    Elf_Sec **secmap  = calloc(nsec ? nsec : 1, sizeof *secmap);
-    uint64_t *secbase = calloc(nsec ? nsec : 1, sizeof *secbase);
-    Elf_Sym **symmap  = calloc(nsym ? nsym : 1, sizeof *symmap);
+    Elf_Sec **secmap = calloc(nsec ? nsec : 1, sizeof(*secmap));
+    Elf_Sym **symmap = calloc(nsym ? nsym : 1, sizeof(*symmap));
+    uint64_t *secbase = calloc(nsec ? nsec : 1, sizeof(*secbase));
 
     // Phase: merge section bytes, recording each input section's new base.
     for (size_t i = 0; i < nsec; i++) {
@@ -107,7 +107,7 @@ void Link_Merge(Elf *out, Elf *in)
         Elf_Sec *sec = Elf_SectionAt(in, i);
         for (size_t r = 0; r < Elf_RelaCount(sec); r++) {
             Elf_Rela *rel = Elf_RelaAt(sec, r);
-            long      k   = Link_SymbolIndex(in, rel->rel_sym);
+            long k = Link_SymbolIndex(in, rel->rel_sym);
             if (k < 0) {
                 continue;
             }
@@ -156,7 +156,7 @@ void Link_PlaceSections(Elf *elf, const Link_Options *opts)
         if (! (sec->sec_flags & ELF_SHF_ALLOC)) {
             continue;
         }
-        int      placed;
+        int placed;
         uint64_t addr = Link_PlacedAddr(opts, sec->sec_name, &placed);
         if (! placed) {
             addr = next;

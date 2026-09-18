@@ -57,8 +57,8 @@ static void Cc_ShowUsage(const char *prog)
 // Returns the directory holding this executable, or NULL if it cannot be found.
 static char *Cc_GetExeDir(void)
 {
-    char    buf[PATH_MAX];
-    ssize_t len = readlink("/proc/self/exe", buf, sizeof buf - 1);
+    char buf[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
     if (len <= 0) {
         return NULL;
     }
@@ -109,9 +109,9 @@ static void Cc_x86_64_WriteExec(FILE *out, Ast_Func *prog, const char *prefix)
     Gen_x86_64_BuildProgram(prog);
     Enc_x86_64_BuildObject();
 
+    int nruntime = (int) (sizeof(Cc_RuntimeNames) / sizeof(Cc_RuntimeNames[0]));
     char *libdir = Cc_GetRuntimeDir(prefix);
-    int   nruntime = (int) (sizeof Cc_RuntimeNames / sizeof Cc_RuntimeNames[0]);
-    char *runtime[sizeof Cc_RuntimeNames / sizeof Cc_RuntimeNames[0]];
+    char *runtime[sizeof(Cc_RuntimeNames) / sizeof(Cc_RuntimeNames[0])];
     for (int i = 0; i < nruntime; i++) {
         runtime[i] = Str_Format("%s/%s", libdir, Cc_RuntimeNames[i]);
     }

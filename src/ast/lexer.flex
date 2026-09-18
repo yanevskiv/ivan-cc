@@ -19,8 +19,8 @@
 /* Decodes a C literal body into raw bytes, reporting the decoded length. */
 static char *Lex_Unescape(const char *p, int len, int *out_len)
 {
+    int n = 0;
     char *buf = malloc(len + 1);
-    int   n   = 0;
 
     for (int i = 0; i < len; i++) {
         if (p[i] != '\\' || i + 1 == len) {

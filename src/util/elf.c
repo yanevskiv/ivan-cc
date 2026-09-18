@@ -118,7 +118,7 @@ const char *Elf_Intern(Elf *elf, const char *name)
     strcpy(copy, name);
     if (elf->elf_npool == elf->elf_cappool) {
         elf->elf_cappool = elf->elf_cappool ? elf->elf_cappool * 2 : 16;
-        elf->elf_pool = realloc(elf->elf_pool, elf->elf_cappool * sizeof *elf->elf_pool);
+        elf->elf_pool = realloc(elf->elf_pool, elf->elf_cappool * sizeof(*elf->elf_pool));
     }
     elf->elf_pool[elf->elf_npool++] = copy;
     return copy;
@@ -127,7 +127,7 @@ const char *Elf_Intern(Elf *elf, const char *name)
 // Creates an empty ELF object of the given type and machine.
 Elf *Elf_New(uint16_t type, uint16_t machine)
 {
-    Elf *elf = calloc(1, sizeof *elf);
+    Elf *elf = calloc(1, sizeof(*elf));
     elf->elf_type    = type;
     elf->elf_machine = machine;
     return elf;
@@ -183,7 +183,7 @@ const char *Elf_Error(const Elf *elf)
 // Appends a new section and returns it.
 Elf_Sec *Elf_SectionAdd(Elf *elf, const char *name, uint32_t type, uint64_t flags)
 {
-    Elf_Sec *sec = calloc(1, sizeof *sec);
+    Elf_Sec *sec = calloc(1, sizeof(*sec));
     sec->sec_name      = Elf_Intern(elf, name);
     sec->sec_type      = type;
     sec->sec_flags     = flags;
@@ -192,7 +192,7 @@ Elf_Sec *Elf_SectionAdd(Elf *elf, const char *name, uint32_t type, uint64_t flag
 
     if (elf->elf_nsecs == elf->elf_capsecs) {
         elf->elf_capsecs = elf->elf_capsecs ? elf->elf_capsecs * 2 : 8;
-        elf->elf_secs = realloc(elf->elf_secs, elf->elf_capsecs * sizeof *elf->elf_secs);
+        elf->elf_secs = realloc(elf->elf_secs, elf->elf_capsecs * sizeof(*elf->elf_secs));
     }
     elf->elf_secs[elf->elf_nsecs++] = sec;
     return sec;
@@ -247,7 +247,7 @@ void Elf_SectionAddr(Elf_Sec *sec, uint64_t addr)
 Elf_Sym *Elf_SymbolAdd(Elf *elf, const char *name, Elf_Sec *sec,
                        uint64_t value, uint8_t bind, uint8_t type)
 {
-    Elf_Sym *sym = calloc(1, sizeof *sym);
+    Elf_Sym *sym = calloc(1, sizeof(*sym));
     sym->sym_name  = Elf_Intern(elf, name);
     sym->sym_sec   = sec;
     sym->sym_value = value;
@@ -256,7 +256,7 @@ Elf_Sym *Elf_SymbolAdd(Elf *elf, const char *name, Elf_Sec *sec,
 
     if (elf->elf_nsyms == elf->elf_capsyms) {
         elf->elf_capsyms = elf->elf_capsyms ? elf->elf_capsyms * 2 : 16;
-        elf->elf_syms = realloc(elf->elf_syms, elf->elf_capsyms * sizeof *elf->elf_syms);
+        elf->elf_syms = realloc(elf->elf_syms, elf->elf_capsyms * sizeof(*elf->elf_syms));
     }
     elf->elf_syms[elf->elf_nsyms++] = sym;
     return sym;
@@ -292,7 +292,7 @@ Elf_Rela *Elf_RelaAdd(Elf_Sec *target, uint64_t offset, Elf_Sym *sym,
     if (target->sec_nrelas == target->sec_caprelas) {
         target->sec_caprelas = target->sec_caprelas ? target->sec_caprelas * 2 : 8;
         target->sec_relas = realloc(target->sec_relas,
-                                    target->sec_caprelas * sizeof *target->sec_relas);
+                                    target->sec_caprelas * sizeof(*target->sec_relas));
     }
     Elf_Rela *rel = &target->sec_relas[target->sec_nrelas++];
     rel->rel_offset = offset;
@@ -338,7 +338,7 @@ void Elf_WriteSymtab(const Elf *elf, const uint32_t *secidx, Elf_Buf *symtab,
                             Elf_Buf *strtab, uint32_t *slot, uint32_t *first_global)
 {
     Elf64_Sym null = {0};
-    Elf_BufData(symtab, &null, sizeof null);
+    Elf_BufData(symtab, &null, sizeof(null));
     Elf_BufByte(strtab, 0);
 
     uint32_t si = 1;
@@ -348,9 +348,9 @@ void Elf_WriteSymtab(const Elf *elf, const uint32_t *secidx, Elf_Buf *symtab,
             *first_global = si;
         }
         for (size_t i = 0; i < elf->elf_nsyms; i++) {
-            Elf_Sym *sym  = elf->elf_syms[i];
-            uint8_t  bind = sym->sym_bind == ELF_BIND_LOCAL ? ELF_BIND_LOCAL
-                                                            : ELF_BIND_GLOBAL;
+            Elf_Sym *sym = elf->elf_syms[i];
+            uint8_t bind = sym->sym_bind == ELF_BIND_LOCAL ? ELF_BIND_LOCAL
+                                                           : ELF_BIND_GLOBAL;
             if (bind != want) {
                 continue;
             }
@@ -367,7 +367,7 @@ void Elf_WriteSymtab(const Elf *elf, const uint32_t *secidx, Elf_Buf *symtab,
             } else {
                 out.st_shndx = ELF_SHN_UNDEF;
             }
-            Elf_BufData(symtab, &out, sizeof out);
+            Elf_BufData(symtab, &out, sizeof(out));
         }
     }
 }
@@ -377,8 +377,8 @@ void Elf_WriteRelas(const Elf_Sec *sec, const uint32_t *slot,
                            const Elf *elf, Elf_Buf *out)
 {
     for (size_t r = 0; r < sec->sec_nrelas; r++) {
+        uint32_t symi = 0;
         Elf_Rela *rel = &sec->sec_relas[r];
-        uint32_t  symi = 0;
         for (size_t i = 0; i < elf->elf_nsyms; i++) {
             if (elf->elf_syms[i] == rel->rel_sym) {
                 symi = slot[i];
@@ -390,7 +390,7 @@ void Elf_WriteRelas(const Elf_Sec *sec, const uint32_t *slot,
             .r_info   = ELF_R_INFO(symi, rel->rel_type),
             .r_addend = rel->rel_addend
         };
-        Elf_BufData(out, &disk, sizeof disk);
+        Elf_BufData(out, &disk, sizeof(disk));
     }
 }
 
@@ -400,14 +400,14 @@ int Elf_WriteRel(const Elf *elf, FILE *out)
     size_t nuser = elf->elf_nsecs;
 
     // Phase: assign a section-header index to every output section.
-    uint32_t *secidx = calloc(nuser ? nuser : 1, sizeof *secidx);
+    uint32_t *secidx = calloc(nuser ? nuser : 1, sizeof(*secidx));
     uint32_t idx = 1;
     for (size_t i = 0; i < nuser; i++) {
         secidx[i] = idx++;
     }
     uint32_t idx_symtab = idx++;
     uint32_t idx_strtab = idx++;
-    uint32_t *relaidx = calloc(nuser ? nuser : 1, sizeof *relaidx);
+    uint32_t *relaidx = calloc(nuser ? nuser : 1, sizeof(*relaidx));
     for (size_t i = 0; i < nuser; i++) {
         if (elf->elf_secs[i]->sec_nrelas) {
             relaidx[i] = idx++;
@@ -417,16 +417,16 @@ int Elf_WriteRel(const Elf *elf, FILE *out)
     uint32_t shnum = idx;
 
     // Phase: build the symbol table and per-section relocation bodies.
-    uint32_t *slot = calloc(elf->elf_nsyms ? elf->elf_nsyms : 1, sizeof *slot);
-    uint32_t  first_global = 1;
-    Elf_Buf   symtab, strtab, shstr;
+    uint32_t first_global = 1;
+    Elf_Buf symtab, strtab, shstr;
+    uint32_t *slot = calloc(elf->elf_nsyms ? elf->elf_nsyms : 1, sizeof(*slot));
     Elf_BufInit(&symtab);
     Elf_BufInit(&strtab);
     Elf_BufInit(&shstr);
     Elf_BufByte(&shstr, 0);
     Elf_WriteSymtab(elf, secidx, &symtab, &strtab, slot, &first_global);
 
-    Elf_Buf *relas = calloc(nuser ? nuser : 1, sizeof *relas);
+    Elf_Buf *relas = calloc(nuser ? nuser : 1, sizeof(*relas));
     for (size_t i = 0; i < nuser; i++) {
         Elf_BufInit(&relas[i]);
         if (relaidx[i]) {
@@ -435,9 +435,9 @@ int Elf_WriteRel(const Elf *elf, FILE *out)
     }
 
     // Phase: lay out section headers and their bodies.
-    Elf64_Shdr *shdrs   = calloc(shnum, sizeof *shdrs);
-    const void **bodies = calloc(shnum, sizeof *bodies);
-    uint64_t    *sizes  = calloc(shnum, sizeof *sizes);
+    Elf64_Shdr *shdrs = calloc(shnum, sizeof(*shdrs));
+    uint64_t *sizes = calloc(shnum, sizeof(*sizes));
+    const void **bodies = calloc(shnum, sizeof(*bodies));
 
     for (size_t i = 0; i < nuser; i++) {
         Elf_Sec *sec = elf->elf_secs[i];
@@ -479,7 +479,7 @@ int Elf_WriteRel(const Elf *elf, FILE *out)
             continue;
         }
         char name[64];
-        snprintf(name, sizeof name, ".rela%s", elf->elf_secs[i]->sec_name);
+        snprintf(name, sizeof(name), ".rela%s", elf->elf_secs[i]->sec_name);
         shdrs[relaidx[i]] = (Elf64_Shdr) {
             .sh_name      = Elf_WriteStr(&shstr, name),
             .sh_type      = ELF_SHT_RELA,
@@ -526,8 +526,8 @@ int Elf_WriteRel(const Elf *elf, FILE *out)
     };
 
     long pos = 0;
-    fwrite(&ehdr, sizeof ehdr, 1, out);
-    pos += sizeof ehdr;
+    fwrite(&ehdr, sizeof(ehdr), 1, out);
+    pos += sizeof(ehdr);
     for (uint32_t i = 1; i < shnum; i++) {
         while (pos < (long) shdrs[i].sh_offset) {
             fputc(0, out);
@@ -570,8 +570,8 @@ uint64_t Elf_PlaceOffset(uint64_t pos, uint64_t vaddr)
 int Elf_WriteExec(const Elf *elf, FILE *out)
 {
     // Phase: select the loadable sections.
-    Elf_Sec **segs = calloc(elf->elf_nsecs ? elf->elf_nsecs : 1, sizeof *segs);
-    uint64_t *offs = calloc(elf->elf_nsecs ? elf->elf_nsecs : 1, sizeof *offs);
+    Elf_Sec **segs = calloc(elf->elf_nsecs ? elf->elf_nsecs : 1, sizeof(*segs));
+    uint64_t *offs = calloc(elf->elf_nsecs ? elf->elf_nsecs : 1, sizeof(*offs));
     int nseg = 0;
     for (size_t i = 0; i < elf->elf_nsecs; i++) {
         Elf_Sec *sec = elf->elf_secs[i];
@@ -598,7 +598,7 @@ int Elf_WriteExec(const Elf *elf, FILE *out)
         .e_phentsize = sizeof(Elf64_Phdr),
         .e_phnum     = (uint16_t) nseg
     };
-    fwrite(&ehdr, sizeof ehdr, 1, out);
+    fwrite(&ehdr, sizeof(ehdr), 1, out);
     for (int i = 0; i < nseg; i++) {
         Elf64_Phdr phdr = {
             .p_type   = ELF_PT_LOAD,
@@ -610,7 +610,7 @@ int Elf_WriteExec(const Elf *elf, FILE *out)
             .p_memsz  = segs[i]->sec_data.eb_len,
             .p_align  = ELF_PAGE
         };
-        fwrite(&phdr, sizeof phdr, 1, out);
+        fwrite(&phdr, sizeof(phdr), 1, out);
     }
     long pos2 = sizeof(Elf64_Ehdr) + (long) nseg * sizeof(Elf64_Phdr);
     for (int i = 0; i < nseg; i++) {
@@ -670,15 +670,15 @@ Elf *Elf_ReadMem(const void *buf, size_t n)
     if (! eh) {
         return NULL;
     }
-    const Elf64_Shdr *sh    = (const Elf64_Shdr *) (data + eh->e_shoff);
-    int               shnum = eh->e_shnum;
-    const char       *shstr = (const char *) (data + sh[eh->e_shstrndx].sh_offset);
+    int shnum = eh->e_shnum;
+    const Elf64_Shdr *sh = (const Elf64_Shdr *) (data + eh->e_shoff);
+    const char *shstr = (const char *) (data + sh[eh->e_shstrndx].sh_offset);
 
     Elf *elf = Elf_New(eh->e_type, eh->e_machine);
     elf->elf_entry = eh->e_entry;
 
     // Phase: reconstruct the model's own sections (skip the synthesized ones).
-    Elf_Sec **secmap = calloc(shnum ? shnum : 1, sizeof *secmap);
+    Elf_Sec **secmap = calloc(shnum ? shnum : 1, sizeof(*secmap));
     for (int i = 1; i < shnum; i++) {
         if (sh[i].sh_type != ELF_SHT_PROGBITS) {
             continue;
@@ -693,9 +693,9 @@ Elf *Elf_ReadMem(const void *buf, size_t n)
     }
 
     // Phase: rebuild the symbol table, resolving names and defining sections.
-    const Elf64_Sym *syms   = NULL;
-    int              nsyms  = 0;
-    const char      *symstr = NULL;
+    int nsyms = 0;
+    const char *symstr = NULL;
+    const Elf64_Sym *syms = NULL;
     for (int i = 0; i < shnum; i++) {
         if (sh[i].sh_type == ELF_SHT_SYMTAB) {
             syms   = (const Elf64_Sym *) (data + sh[i].sh_offset);
@@ -705,7 +705,7 @@ Elf *Elf_ReadMem(const void *buf, size_t n)
         }
     }
 
-    Elf_Sym **symmap = calloc(nsyms ? nsyms : 1, sizeof *symmap);
+    Elf_Sym **symmap = calloc(nsyms ? nsyms : 1, sizeof(*symmap));
     for (int i = 1; i < nsyms; i++) {
         const Elf64_Sym *sym  = &syms[i];
         const char      *name = symstr + sym->st_name;
@@ -726,10 +726,10 @@ Elf *Elf_ReadMem(const void *buf, size_t n)
         if (! target) {
             continue;
         }
+        int nrel = sh[i].sh_size / sizeof(Elf64_Rela);
         const Elf64_Rela *rela = (const Elf64_Rela *) (data + sh[i].sh_offset);
-        int               nrel = sh[i].sh_size / sizeof(Elf64_Rela);
         for (int r = 0; r < nrel; r++) {
-            uint32_t si  = ELF_R_SYM(rela[r].r_info);
+            uint32_t si = ELF_R_SYM(rela[r].r_info);
             Elf_Sym *sym = (si < (uint32_t) nsyms) ? symmap[si] : NULL;
             Elf_RelaAdd(target, rela[r].r_offset, sym,
                         ELF_R_TYPE(rela[r].r_info), rela[r].r_addend);
