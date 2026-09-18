@@ -30,12 +30,18 @@ static void As_Assemble(const char *input, const char *output)
     Txt_x86_64_Att_Parse(text);
     Str_Free(text);
 
-    Elf *elf = Enc_x86_64_Object();
-    if (Elf_Write(elf, output) != 0) {
+    Enc_x86_64_BuildObject();
+
+    FILE *out = fopen(output, "wb");
+    if (! out) {
         perror(output);
         exit(1);
     }
-    Elf_Free(elf);
+    if (Enc_x86_64_Write(out) != 0) {
+        perror(output);
+        exit(1);
+    }
+    fclose(out);
 }
 
 // Main function

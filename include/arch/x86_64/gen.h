@@ -1,8 +1,6 @@
 #ifndef GEN_X86_64_H
 #define GEN_X86_64_H
 
-#include <stdio.h>
-
 #include "ast/ast.h"
 #include "arch/x86_64/asm.h"
 
@@ -31,8 +29,5 @@ void Gen_x86_64_EmitTextSection(Ast_Func *prog);
 
 // Top-level code generation
 void Gen_x86_64_BuildProgram(Ast_Func *prog);
-void Gen_x86_64_CodegenAsm(FILE *out, Ast_Func *prog);
-void Gen_x86_64_CodegenExec(FILE *out, Ast_Func *prog);
-void Gen_x86_64_CodegenRel(FILE *out, Ast_Func *prog);
 
 #endif // GEN_X86_64_H

@@ -2,6 +2,7 @@
 #define ENC_X86_64_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include "util/elf.h"
 #include "arch/x86_64/asm.h"
 
@@ -31,28 +32,28 @@ void Enc_x86_64_EmitRaw(const void *data, int len);
 // Recording labels and fixups
 void Enc_x86_64_RecordLabel(const char *name);
 void Enc_x86_64_RecordGlobl(const char *name);
-void Enc_x86_64_Fixup(const char *name, uint32_t type);
+void Enc_x86_64_RecordFixup(const char *name, uint32_t type);
 
 // REX and ModRM encoding
 int  Enc_x86_64_RegHigh(Asm_x86_64_Reg reg);
-void Enc_x86_64_RexW(int regHigh, int rmHigh);
-void Enc_x86_64_Rex(int width, Asm_x86_64_Reg reg, Asm_x86_64_Reg rm);
-void Enc_x86_64_ModRR(int reg, Asm_x86_64_Reg rm);
-void Enc_x86_64_Mem(int reg, Asm_x86_64_Reg base, int disp);
+void Enc_x86_64_EmitRexW(int regHigh, int rmHigh);
+void Enc_x86_64_EmitRex(int width, Asm_x86_64_Reg reg, Asm_x86_64_Reg rm);
+void Enc_x86_64_EmitModRR(int reg, Asm_x86_64_Reg rm);
+void Enc_x86_64_EmitMem(int reg, Asm_x86_64_Reg base, int disp);
 
 // Instruction encoding
-void Enc_x86_64_RR(int opcode, Asm_x86_64_Reg src, Asm_x86_64_Reg dst);
-void Enc_x86_64_GrpImm(int grp, long imm, Asm_x86_64_Reg dst);
-void Enc_x86_64_MovImm(long imm, Asm_x86_64_Reg dst);
-void Enc_x86_64_MovImm8(long imm, Asm_x86_64_Reg dst);
-void Enc_x86_64_MemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base, int disp, int width);
-void Enc_x86_64_Movsx(const Asm_x86_64_Item *item);
-void Enc_x86_64_LeaRip(Asm_x86_64_Reg dst, const char *label);
-void Enc_x86_64_GrpUnary(int grp, Asm_x86_64_Reg reg);
-void Enc_x86_64_Setcc(int opcode, Asm_x86_64_Reg reg);
-void Enc_x86_64_Branch(const Asm_x86_64_Item *item);
-void Enc_x86_64_Mov(const Asm_x86_64_Item *item);
-void Enc_x86_64_Instr(const Asm_x86_64_Item *item);
+void Enc_x86_64_EmitRR(int opcode, Asm_x86_64_Reg src, Asm_x86_64_Reg dst);
+void Enc_x86_64_EmitGrpImm(int grp, long imm, Asm_x86_64_Reg dst);
+void Enc_x86_64_EmitMovImm(long imm, Asm_x86_64_Reg dst);
+void Enc_x86_64_EmitMovImm8(long imm, Asm_x86_64_Reg dst);
+void Enc_x86_64_EmitMemForm(int opcode, Asm_x86_64_Reg reg, Asm_x86_64_Reg base, int disp, int width);
+void Enc_x86_64_EmitMovsx(const Asm_x86_64_Item *item);
+void Enc_x86_64_EmitLeaRip(Asm_x86_64_Reg dst, const char *label);
+void Enc_x86_64_EmitGrpUnary(int grp, Asm_x86_64_Reg reg);
+void Enc_x86_64_EmitSetcc(int opcode, Asm_x86_64_Reg reg);
+void Enc_x86_64_EmitBranch(const Asm_x86_64_Item *item);
+void Enc_x86_64_EmitMov(const Asm_x86_64_Item *item);
+void Enc_x86_64_EmitInstr(const Asm_x86_64_Item *item);
 
 // Symbols, sections and relocations
 int  Enc_x86_64_IsGlobl(const char *name);
@@ -61,6 +62,9 @@ void Enc_x86_64_BuildSymbols(void);
 void Enc_x86_64_BuildRelocs(void);
 
 // Encoding the instruction list to a relocatable ELF object
-Elf *Enc_x86_64_Object(void);
+void Enc_x86_64_Reset(void);
+void Enc_x86_64_BuildObject(void);
+Elf *Enc_x86_64_GetObject(void);
+int  Enc_x86_64_Write(FILE *out);
 
 #endif // ENC_X86_64_H

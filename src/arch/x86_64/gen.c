@@ -3,10 +3,7 @@
 #include "common.h"
 #include "ast/ast.h"
 #include "util/elf.h"
-#include "util/link.h"
 #include "arch/x86_64/asm.h"
-#include "arch/x86_64/enc.h"
-#include "arch/x86_64/txt.h"
 #include "arch/x86_64/gen.h"
 
 // Number of integer arguments the ABI passes in registers; the rest go on the stack.
@@ -17,9 +14,6 @@
 
 // Required %rsp alignment, in bytes, at the point of a `call`.
 #define STACK_ALIGN 16
-
-// Runtime objects the default (linked) output is always merged with.
-static const char *Gen_x86_64_Runtime[] = { CRT_PATH, LIBC_PATH };
 
 // Number of values currently pushed with Gen_x86_64_EmitPush().
 static int Gen_x86_64_Depth;
@@ -387,48 +381,11 @@ void Gen_x86_64_EmitTextSection(Ast_Func *prog)
 void Gen_x86_64_BuildProgram(Ast_Func *prog)
 {
     Asm_x86_64_Reset();
-    Gen_x86_64_Depth   = 0;
+    Gen_x86_64_Depth = 0;
     Gen_x86_64_LabelId = 0;
 
     Asm_x86_64_EmitDirective(".file \"cc\"");
     Gen_x86_64_EmitDataSection();
     Gen_x86_64_EmitTextSection(prog);
     Asm_x86_64_EmitDirective(".section .note.GNU-stack,\"\",@progbits");
-}
-
-// Emits assembly text for the whole program to out.
-void Gen_x86_64_CodegenAsm(FILE *out, Ast_Func *prog)
-{
-    Gen_x86_64_BuildProgram(prog);
-    Txt_x86_64_Att_Write(out);
-}
-
-// Encodes the whole program and links it against the runtime into a static ET_EXEC, to out.
-void Gen_x86_64_CodegenExec(FILE *out, Ast_Func *prog)
-{
-    Gen_x86_64_BuildProgram(prog);
-    Elf *elf = Enc_x86_64_Object();
-
-    for (size_t i = 0; i < sizeof Gen_x86_64_Runtime / sizeof Gen_x86_64_Runtime[0]; i++) {
-        Elf *runtime = Elf_Read(Gen_x86_64_Runtime[i]);
-        if (! runtime) {
-            Show_Error("cannot read runtime object '%s'", Gen_x86_64_Runtime[i]);
-        }
-        Link_Merge(elf, runtime);
-        Elf_Free(runtime);
-    }
-
-    Link_Options opts = { .lo_entry = "_start" };
-    Link_Exec(elf, &opts);
-    Elf_WriteFile(elf, out);
-    Elf_Free(elf);
-}
-
-// Encodes the whole program as a relocatable ELF object (.o) to out, references left undefined.
-void Gen_x86_64_CodegenRel(FILE *out, Ast_Func *prog)
-{
-    Gen_x86_64_BuildProgram(prog);
-    Elf *elf = Enc_x86_64_Object();
-    Elf_WriteFile(elf, out);
-    Elf_Free(elf);
 }
