@@ -53,6 +53,14 @@ char *Str_Trim(char *str)
     return str;
 }
 
+// Releases a dynamically allocated string, ignoring a NULL one.
+void Str_Free(char *str)
+{
+    if (str) {
+        free(str);
+    }
+}
+
 // Changes or appends a file extension ('main.c' -> 'main.s').
 char *Str_ChangeOrAppendExt(const char *input, const char *suffix)
 {
@@ -97,11 +105,42 @@ Str_List Str_Split(const char *str, const char *sep)
 void Str_ListFree(Str_List *list)
 {
     for (int i = 0; i < list->sl_count; i++) {
-        free(list->sl_items[i]);
+        Str_Free(list->sl_items[i]);
     }
     free(list->sl_items);
     list->sl_items = NULL;
     list->sl_count = 0;
+}
+
+// Decodes a quoted-string body into raw bytes, stopping at the closing quote.
+char *Str_Unescape(const char *p, int len, int *out_len)
+{
+    char *buf = malloc(len + 1);
+    int   n   = 0;
+
+    for (int i = 0; i < len; i++) {
+        if (p[i] == '"') {
+            break;
+        }
+        if (p[i] != '\\' || i + 1 == len) {
+            buf[n++] = p[i];
+            continue;
+        }
+        switch (p[++i]) {
+            case 'n':  buf[n++] = '\n'; break;
+            case 't':  buf[n++] = '\t'; break;
+            case 'r':  buf[n++] = '\r'; break;
+            case '0':  buf[n++] = '\0'; break;
+            case '\\': buf[n++] = '\\'; break;
+            case '\'': buf[n++] = '\''; break;
+            case '"':  buf[n++] = '"';  break;
+            default:   buf[n++] = p[i]; break;
+        }
+    }
+
+    buf[n] = '\0';
+    *out_len = n;
+    return buf;
 }
 
 // Returns nonzero if the extended regex pattern matches anywhere in str.

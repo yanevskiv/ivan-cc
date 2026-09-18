@@ -24,7 +24,7 @@ CC_OBJS := $(OUT)/cc.o $(LIB_OBJS) $(GEN_OBJS)
 AS_OBJS := $(OUT)/as.o $(OUT)/util/file.o $(OUT)/util/str.o $(OUT)/util/elf.o \
 	$(OUT)/arch/$(TARGET_ARCH)/txt.o $(OUT)/arch/$(TARGET_ARCH)/asm.o \
 	$(OUT)/arch/$(TARGET_ARCH)/enc.o
-LD_OBJS := $(OUT)/ld.o $(OUT)/util/elf.o $(OUT)/util/link.o $(OUT)/arch/$(TARGET_ARCH)/rel.o
+LD_OBJS := $(OUT)/ld.o $(OUT)/util/str.o $(OUT)/util/elf.o $(OUT)/util/link.o $(OUT)/arch/$(TARGET_ARCH)/rel.o
 
 TEST_TOOL  := tools/$(TARGET)-test
 TEST_SRCS  := $(sort $(wildcard tests/test*.c))

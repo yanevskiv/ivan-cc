@@ -10,22 +10,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include "common.h"
+#include "util/str.h"
 #include "parser.tab.h"
 
-/* Stamp every token with the line it starts on; bison propagates it from
- * there, and no token rule matches a newline, so yylineno is still the
- * token's own line when the action runs. */
+/* Stamps every token with the line it starts on. */
 #define YY_USER_ACTION  yylloc = yylineno;
 
-/* Decode a C string/char literal body (without the surrounding quotes),
- * translating the escape sequences we support into raw bytes.  The decoded
- * length goes to *out_len, since an embedded \0 makes strlen() a lie. */
-static char *unescape(const char *p, int len, int *out_len)
+/* Decodes a C literal body into raw bytes, reporting the decoded length. */
+static char *Lex_Unescape(const char *p, int len, int *out_len)
 {
     char *buf = malloc(len + 1);
     int   n   = 0;
+
     for (int i = 0; i < len; i++) {
-        if (p[i] != '\\') { buf[n++] = p[i]; continue; }
+        if (p[i] != '\\' || i + 1 == len) {
+            buf[n++] = p[i];
+            continue;
+        }
         switch (p[++i]) {
             case 'n':  buf[n++] = '\n'; break;
             case 't':  buf[n++] = '\t'; break;
@@ -37,10 +38,12 @@ static char *unescape(const char *p, int len, int *out_len)
             default:   buf[n++] = p[i]; break;
         }
     }
+
     buf[n] = '\0';
     *out_len = n;
     return buf;
 }
+
 %}
 
 D   [0-9]
@@ -70,10 +73,10 @@ A   [A-Za-z_0-9]
 0[xX][0-9A-Fa-f]+       { yylval.num = strtol(yytext, NULL, 16); return NUM; }
 {D}+                    { yylval.num = strtol(yytext, NULL, 10); return NUM; }
 
-\"([^"\\\n]|\\.)*\"     { yylval.str_lit.as_data = unescape(yytext + 1, yyleng - 2, &yylval.str_lit.as_len);
+\"([^"\\\n]|\\.)*\"     { yylval.str_lit.as_data = Lex_Unescape(yytext + 1, yyleng - 2, &yylval.str_lit.as_len);
                           return STR; }
-'([^'\\\n]|\\.)'        { int n; char *s = unescape(yytext + 1, yyleng - 2, &n);
-                          yylval.num = (unsigned char) s[0]; free(s); return NUM; }
+'([^'\\\n]|\\.)'        { int n; char *s = Lex_Unescape(yytext + 1, yyleng - 2, &n);
+                          yylval.num = (unsigned char) s[0]; Str_Free(s); return NUM; }
 
 "=="                    return EQ;
 "!="                    return NE;

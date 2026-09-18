@@ -192,7 +192,7 @@ int Txt_x86_64_Att_ParseOperand(const char *text, Asm_x86_64_Operand *op)
     if (text[0] == '%' && Str_RegexExtract(text, "^%([A-Za-z][A-Za-z0-9]*)$", g, 1)) {
         int width;
         int reg = Txt_x86_64_RegByName(g[0], &width);
-        free(g[0]);
+        Str_Free(g[0]);
         if (reg < 0) {
             return 0;
         }
@@ -201,22 +201,22 @@ int Txt_x86_64_Att_ParseOperand(const char *text, Asm_x86_64_Operand *op)
     }
     if (text[0] == '$' && Str_RegexExtract(text, "^[$](-?(0[xX][0-9A-Fa-f]+|[0-9]+))$", g, 1)) {
         long val = strtol(g[0], NULL, 0);
-        free(g[0]);
+        Str_Free(g[0]);
         *op = Asm_x86_64_Imm(val);
         return 1;
     }
     if (Str_RegexExtract(text, "^([.A-Za-z0-9_$]+)[(]%rip[)]$", g, 1)) {
         *op = Asm_x86_64_Rip(strdup(g[0]));
-        free(g[0]);
+        Str_Free(g[0]);
         return 1;
     }
     if (Str_RegexExtract(text, "^(-?(0[xX][0-9A-Fa-f]+|[0-9]+))?[(]%([A-Za-z][A-Za-z0-9]*)[)]$", g, 3)) {
         int width;
         int base = Txt_x86_64_RegByName(g[2], &width);
         int disp = g[0] ? (int) strtol(g[0], NULL, 0) : 0;
-        free(g[0]);
-        free(g[1]);
-        free(g[2]);
+        Str_Free(g[0]);
+        Str_Free(g[1]);
+        Str_Free(g[2]);
         if (base < 0) {
             return 0;
         }
@@ -258,29 +258,11 @@ void Txt_x86_64_Att_EmitString(const char *args, int terminate)
     }
     p++;
 
-    unsigned char *buf = malloc(strlen(p) + 2);
-    size_t len = 0;
-    while (*p && *p != '"') {
-        char c = *p++;
-        if (c == '\\' && *p) {
-            char esc = *p++;
-            switch (esc) {
-                case 'n':  c = '\n'; break;
-                case 't':  c = '\t'; break;
-                case 'r':  c = '\r'; break;
-                case '0':  c = '\0'; break;
-                case '\\': c = '\\'; break;
-                case '"':  c = '"';  break;
-                default:   c = esc;  break;
-            }
-        }
-        buf[len++] = (unsigned char) c;
-    }
-    if (terminate) {
-        buf[len++] = '\0';
-    }
-    Asm_x86_64_EmitBytes(buf, (int) len);
-    free(buf);
+    int   len = 0;
+    char *buf = Str_Unescape(p, (int) strlen(p), &len);
+
+    Asm_x86_64_EmitBytes(buf, len + (terminate ? 1 : 0));
+    Str_Free(buf);
 }
 
 // Parses one instruction line ("mnemonic [op[, op]]") into an instruction item.
@@ -387,7 +369,7 @@ void Txt_x86_64_Att_ParseDirective(const char *line)
     } else if (Str_Equals(name, ".globl") || Str_Equals(name, ".global")) {
         char *sym = strndup(args, strcspn(args, " ,\t"));
         Asm_x86_64_EmitGlobl("%s", sym);
-        free(sym);
+        Str_Free(sym);
     } else if (Str_Equals(name, ".byte")) {
         Txt_x86_64_Att_EmitInts(args, 1);
     } else if (Str_Equals(name, ".word") || Str_Equals(name, ".short") || Str_Equals(name, ".value")) {
@@ -434,8 +416,8 @@ void Txt_x86_64_Att_ParseLine(char *line)
         if (g[1] && *g[1]) {
             Txt_x86_64_Att_ParseLine(g[1]);
         }
-        free(g[0]);
-        free(g[1]);
+        Str_Free(g[0]);
+        Str_Free(g[1]);
     } else if (text[0] == '.') {
         Txt_x86_64_Att_ParseDirective(text);
     } else {

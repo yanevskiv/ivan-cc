@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "util/file.h"
+#include "util/str.h"
 
 // Reads the whole file into a malloc'd, NUL-terminated buffer; len is optional.
 char *File_GetContent(const char *path, long *len)
@@ -15,7 +16,7 @@ char *File_GetContent(const char *path, long *len)
 
     char *buf = malloc(size + 1);
     if (fread(buf, 1, size, file) != (size_t) size) {
-        free(buf);
+        Str_Free(buf);
         fclose(file);
         return NULL;
     }

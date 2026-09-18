@@ -134,6 +134,6 @@ int main(int argc, char **argv)
     }
 
 cleanup:
-    free(outbuf);
+    Str_Free(outbuf);
     return result;
 }

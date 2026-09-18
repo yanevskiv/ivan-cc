@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "util/elf.h"
+#include "util/str.h"
 
 // Initializes an empty byte buffer.
 void Elf_BufInit(Elf_Buf *buf)
@@ -149,7 +150,7 @@ void Elf_Free(Elf *elf)
     }
     free(elf->elf_syms);
     for (size_t i = 0; i < elf->elf_npool; i++) {
-        free(elf->elf_pool[i]);
+        Str_Free(elf->elf_pool[i]);
     }
     free(elf->elf_pool);
     free(elf);

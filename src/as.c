@@ -28,7 +28,7 @@ static void As_Assemble(const char *input, const char *output)
         exit(1);
     }
     Txt_x86_64_Att_Parse(text);
-    free(text);
+    Str_Free(text);
 
     Elf *elf = Enc_x86_64_Object();
     if (Elf_Write(elf, output) != 0) {
@@ -65,6 +65,6 @@ int main(int argc, char **argv)
     }
 
     As_Assemble(input, output);
-    free(outbuf);
+    Str_Free(outbuf);
     return 0;
 }

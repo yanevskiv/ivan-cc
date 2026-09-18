@@ -86,10 +86,10 @@ void Asm_x86_64_Reset(void)
     Asm_x86_64_Item *item = Asm_x86_64_Head;
     while (item) {
         Asm_x86_64_Item *next = item->ai_next;
-        free((char *) item->ai_label);
-        free((char *) item->ai_text);
-        free((char *) item->ai_dst.ao_label);
-        free((char *) item->ai_src.ao_label);
+        Str_Free((char *) item->ai_label);
+        Str_Free((char *) item->ai_text);
+        Str_Free((char *) item->ai_dst.ao_label);
+        Str_Free((char *) item->ai_src.ao_label);
         free(item->ai_bytes);
         free(item);
         item = next;

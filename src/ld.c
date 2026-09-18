@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "util/elf.h"
+#include "util/str.h"
 #include "util/link.h"
 
 // Permission bits for the executable ld writes (rwxr-xr-x).
@@ -33,11 +34,11 @@ static char *Ld_PlaceName(const char *spec, int len)
 {
     char *name = strndup(spec, len);
     if (strcmp(name, "text") == 0) {
-        free(name);
+        Str_Free(name);
         return strdup(".text");
     }
     if (strcmp(name, "data") == 0 || strcmp(name, "rodata") == 0) {
-        free(name);
+        Str_Free(name);
         return strdup(".rodata");
     }
     return name;
