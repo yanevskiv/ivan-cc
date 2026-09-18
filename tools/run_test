@@ -30,12 +30,12 @@ pass()
 fail()
 {
     printf '\033[31mFAIL\033[0m: %s\n' "$SOURCE"
-    printf '%s\n' "$*" | sed 's/^/    /'
+    printf '%s\n' "$*" | sed 's/^/    /' | sed '${/^ *$/d;}'
     exit 1
 }
 
 # Echo the value of a `// (Test) <key>:` directive, or nothing if the file
-# declares none. Keys match case-insensitively; `Return` is the spelling to use.
+# declares none. Keys match case-insensitively, spelled as the checks below do.
 get_value()
 {
     head -n "$HEAD_LINES" "$SOURCE" \
@@ -67,11 +67,31 @@ setup()
     fi
 }
 
-# Check that the test compiled at all.
+# Check the compile against `// (Test) Compiler status:` and `// (Test) Compiler
+# error:`, which together default to demanding a clean compile.
 test_compile()
 {
-    [ "$COMPILE_STATUS" -eq 0 ] || fail "Compilation failed
+    EXPECT_STATUS=$(get_value 'compiler status')
+    EXPECT_ERROR=$(get_value 'compiler error')
+
+    [ -n "$EXPECT_STATUS" ] || EXPECT_STATUS=0
+
+    case $EXPECT_STATUS in
+        *[!0-9]*) fail "Compiler status expects a number, got '$EXPECT_STATUS'" ;;
+    esac
+
+    if [ "$COMPILE_STATUS" -ne "$EXPECT_STATUS" ]; then
+        fail "Compiler returned $COMPILE_STATUS but expected $EXPECT_STATUS
 $(cat "$COMPILE_ERR")"
+    fi
+
+    if [ -n "$EXPECT_ERROR" ] && ! grep -qF "$EXPECT_ERROR" "$COMPILE_ERR"; then
+        fail "Compiler error does not mention '$EXPECT_ERROR'
+$(cat "$COMPILE_ERR")"
+    fi
+
+    # A test the compiler was meant to reject leaves nothing to run.
+    [ "$EXPECT_STATUS" -eq 0 ] || pass
 }
 
 # Check the run against `// (Test) Return:`.
