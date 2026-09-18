@@ -13,6 +13,15 @@
         exit(1);                        \
     } while (0)
 
+// Prints a diagnostic naming the source line it came from and exits.
+#define Show_ErrorAt(line, ...)                          \
+    do {                                                 \
+        fprintf(stderr, "cc: error: line %d: ", (line)); \
+        fprintf(stderr, __VA_ARGS__);                    \
+        fprintf(stderr, "\n");                           \
+        exit(1);                                         \
+    } while (0)
+
 // Prints a warning diagnostic and continues; shared by the lexer, parser and back end.
 #define Show_Warning(...)                 \
     do {                                  \

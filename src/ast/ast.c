@@ -27,42 +27,43 @@ int Ast_AddString(char *str)
 }
 
 // Allocates a zeroed node of the given kind.
-Ast_Node *Ast_NewNode(Ast_NodeKind kind)
+Ast_Node *Ast_NewNode(Ast_NodeKind kind, int line)
 {
     Ast_Node *node = calloc(1, sizeof(Ast_Node));
     node->an_kind = kind;
+    node->an_line = line;
     return node;
 }
 
 // Builds a binary-operator node with the given operands.
-Ast_Node *Ast_NewBinary(Ast_NodeKind kind, Ast_Node *lhs, Ast_Node *rhs)
+Ast_Node *Ast_NewBinary(Ast_NodeKind kind, Ast_Node *lhs, Ast_Node *rhs, int line)
 {
-    Ast_Node *node = Ast_NewNode(kind);
+    Ast_Node *node = Ast_NewNode(kind, line);
     node->an_lhs = lhs;
     node->an_rhs = rhs;
     return node;
 }
 
 // Builds a unary-operator node with the given operand.
-Ast_Node *Ast_NewUnary(Ast_NodeKind kind, Ast_Node *lhs)
+Ast_Node *Ast_NewUnary(Ast_NodeKind kind, Ast_Node *lhs, int line)
 {
-    Ast_Node *node = Ast_NewNode(kind);
+    Ast_Node *node = Ast_NewNode(kind, line);
     node->an_lhs = lhs;
     return node;
 }
 
 // Builds an integer-literal node.
-Ast_Node *Ast_NewNum(long val)
+Ast_Node *Ast_NewNum(long val, int line)
 {
-    Ast_Node *node = Ast_NewNode(AST_NODE_KIND_NUM);
+    Ast_Node *node = Ast_NewNode(AST_NODE_KIND_NUM, line);
     node->an_val = val;
     return node;
 }
 
 // Builds a node that references a local variable.
-Ast_Node *Ast_NewVarNode(Ast_Var *var)
+Ast_Node *Ast_NewVarNode(Ast_Var *var, int line)
 {
-    Ast_Node *node = Ast_NewNode(AST_NODE_KIND_VAR);
+    Ast_Node *node = Ast_NewNode(AST_NODE_KIND_VAR, line);
     node->an_var = var;
     return node;
 }
@@ -85,7 +86,7 @@ Ast_Var *Ast_FindVar(const char *name)
 }
 
 // Declares a variable in the current scope, reusing any existing slot.
-Ast_Var *Ast_DeclareVar(const char *name)
+Ast_Var *Ast_DeclareVar(const char *name, int line)
 {
     Ast_Var *var = Ast_FindVar(name);
     if (var) {
@@ -93,6 +94,7 @@ Ast_Var *Ast_DeclareVar(const char *name)
     }
     var = calloc(1, sizeof(Ast_Var));
     var->av_name = strdup(name);
+    var->av_line = line;
     var->av_next = Ast_Locals;
     Ast_Locals = var;
     return var;

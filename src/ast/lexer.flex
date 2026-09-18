@@ -12,6 +12,11 @@
 #include "common.h"
 #include "parser.tab.h"
 
+/* Stamp every token with the line it starts on; bison propagates it from
+ * there, and no token rule matches a newline, so yylineno is still the
+ * token's own line when the action runs. */
+#define YY_USER_ACTION  yylloc = yylineno;
+
 /* Decode a C string/char literal body (without the surrounding quotes),
  * translating the escape sequences we support into raw bytes. */
 static char *unescape(const char *p, int len)
@@ -75,9 +80,26 @@ A   [A-Za-z_0-9]
 "||"                    return OR;
 "..."                   return ELLIPSIS;
 
-[-+*/%=<>!(){};,&]       return yytext[0];
+"+"                     return ADD;
+"-"                     return SUB;
+"*"                     return MUL;
+"/"                     return DIV;
+"%"                     return MOD;
+"="                     return ASSIGN;
+"<"                     return LT;
+">"                     return GT;
+"!"                     return NOT;
+"&"                     return AMP;
 
-.                       { Show_Error("lexer: unexpected character '%s' on line %d",
-                                yytext, yylineno); }
+"("                     return LPAREN;
+")"                     return RPAREN;
+"["                     return LSQUARE;
+"]"                     return RSQUARE;
+"{"                     return LBRACE;
+"}"                     return RBRACE;
+";"                     return SEMI;
+","                     return COMMA;
+
+.                       { Show_ErrorAt(yylineno, "lexer: unexpected character '%s'", yytext); }
 
 %%

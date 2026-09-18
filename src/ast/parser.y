@@ -19,8 +19,11 @@
 #include "ast/ast.h"
 
 int  yylex(void);
-extern int yylineno;
 void yyerror(const char *s);
+
+/* A location is the line a token starts on, so a rule spans no range: it
+ * inherits the line of its first token, or of the token before an empty rule. */
+#define YYLLOC_DEFAULT(cur, rhs, n)  ((cur) = (n) ? YYRHSLOC(rhs, 1) : YYRHSLOC(rhs, 0))
 
 /* State for the function definition currently being parsed. */
 static char    *cur_func_name;
@@ -48,6 +51,9 @@ static void add_function(Ast_Func *fn)
 }
 %}
 
+%locations
+%define api.location.type {int}
+
 %union {
     long      num;
     char     *str;
@@ -57,21 +63,23 @@ static void add_function(Ast_Func *fn)
 %token <num> NUM
 %token <str> IDENT STR
 %token INT CHAR VOID CONST RETURN IF ELSE FOR WHILE BREAK CONTINUE
-%token EQ NE LE GE AND OR ELLIPSIS
+%token ADD SUB MUL DIV MOD ASSIGN NOT AMP
+%token EQ NE LT GT LE GE AND OR
+%token LPAREN RPAREN LSQUARE RSQUARE LBRACE RBRACE SEMI COMMA ELLIPSIS
 
 %type <node> stmt stmt_list compound_stmt decl expr expr_opt args arg_list
 
 /* Lowest precedence first. */
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
-%right '='
+%right ASSIGN
 %left OR
 %left AND
 %left EQ NE
-%left '<' '>' LE GE
-%left '+' '-'
-%left '*' '/' '%'
-%right '!' UMINUS
+%left LT GT LE GE
+%left ADD SUB
+%left MUL DIV MOD
+%right NOT UMINUS
 
 %start translation_unit
 
@@ -85,7 +93,7 @@ translation_unit
     ;
 
 external_decl
-    : type_name IDENT '('
+    : type_name IDENT LPAREN
         {
             cur_func_name   = $2;
             cur_params      = NULL;
@@ -93,7 +101,7 @@ external_decl
             cur_nparams     = 0;
             Ast_BeginScope();
         }
-      params ')' func_tail
+      params RPAREN func_tail
     ;
 
 func_tail
@@ -107,7 +115,7 @@ func_tail
             fn->af_locals  = Ast_CurrentLocals();
             add_function(fn);
         }
-    | ';'   /* a prototype, e.g. `int printf(const char *, ...);` -- discard */
+    | SEMI  /* a prototype, e.g. `int printf(const char *, ...);` -- discard */
     ;
 
 params
@@ -117,11 +125,11 @@ params
 
 param_list
     : param
-    | param_list ',' param
+    | param_list COMMA param
     ;
 
 param
-    : type_name IDENT   { add_param(Ast_DeclareVar($2)); }
+    : type_name IDENT   { add_param(Ast_DeclareVar($2, @2)); }
     | type_name         /* unnamed parameter, e.g. `void` */
     | ELLIPSIS          /* variadic marker, ignored */
     ;
@@ -145,14 +153,14 @@ base
 
 stars
     : /* empty */
-    | stars '*'
+    | stars MUL
     ;
 
 /* ---- statements ---------------------------------------------------- */
 
 compound_stmt
-    : '{' stmt_list '}'
-        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_BLOCK); n->an_body = $2; $$ = n; }
+    : LBRACE stmt_list RBRACE
+        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_BLOCK, @1); n->an_body = $2; $$ = n; }
     ;
 
 stmt_list
@@ -161,30 +169,33 @@ stmt_list
     ;
 
 stmt
-    : RETURN expr ';'      { $$ = Ast_NewUnary(AST_NODE_KIND_RETURN, $2); }
-    | RETURN ';'           { $$ = Ast_NewUnary(AST_NODE_KIND_RETURN, NULL); }
-    | IF '(' expr ')' stmt %prec LOWER_THAN_ELSE
-        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_IF); n->an_cond = $3; n->an_then = $5; $$ = n; }
-    | IF '(' expr ')' stmt ELSE stmt
-        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_IF); n->an_cond = $3; n->an_then = $5; n->an_els = $7; $$ = n; }
-    | FOR '(' expr_opt ';' expr_opt ';' expr_opt ')' stmt
-        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_FOR);
+    : RETURN expr SEMI     { $$ = Ast_NewUnary(AST_NODE_KIND_RETURN, $2, @1); }
+    | RETURN SEMI          { $$ = Ast_NewUnary(AST_NODE_KIND_RETURN, NULL, @1); }
+    | IF LPAREN expr RPAREN stmt %prec LOWER_THAN_ELSE
+        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_IF, @1);
+          n->an_cond = $3; n->an_then = $5; $$ = n; }
+    | IF LPAREN expr RPAREN stmt ELSE stmt
+        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_IF, @1);
+          n->an_cond = $3; n->an_then = $5; n->an_els = $7; $$ = n; }
+    | FOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt
+        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_FOR, @1);
           n->an_init = $3; n->an_cond = $5; n->an_inc = $7; n->an_body = $9; $$ = n; }
-    | WHILE '(' expr ')' stmt
-        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_FOR); n->an_cond = $3; n->an_body = $5; $$ = n; }
+    | WHILE LPAREN expr RPAREN stmt
+        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_FOR, @1);
+          n->an_cond = $3; n->an_body = $5; $$ = n; }
     | compound_stmt        { $$ = $1; }
-    | decl ';'             { $$ = $1; }
-    | expr ';'             { $$ = Ast_NewUnary(AST_NODE_KIND_EXPR_STMT, $1); }
-    | ';'                  { $$ = Ast_NewNode(AST_NODE_KIND_NOP); }
+    | decl SEMI            { $$ = $1; }
+    | expr SEMI            { $$ = Ast_NewUnary(AST_NODE_KIND_EXPR_STMT, $1, @1); }
+    | SEMI                 { $$ = Ast_NewNode(AST_NODE_KIND_NOP, @1); }
     ;
 
 decl
     : type_name IDENT
-        { Ast_DeclareVar($2); $$ = Ast_NewNode(AST_NODE_KIND_NOP); }
-    | type_name IDENT '=' expr
-        { Ast_Var *v = Ast_DeclareVar($2);
-          $$ = Ast_NewUnary(AST_NODE_KIND_EXPR_STMT,
-                            Ast_NewBinary(AST_NODE_KIND_ASSIGN, Ast_NewVarNode(v), $4)); }
+        { Ast_DeclareVar($2, @2); $$ = Ast_NewNode(AST_NODE_KIND_NOP, @2); }
+    | type_name IDENT ASSIGN expr
+        { Ast_Var *v = Ast_DeclareVar($2, @2);
+          Ast_Node *n = Ast_NewBinary(AST_NODE_KIND_ASSIGN, Ast_NewVarNode(v, @2), $4, @3);
+          $$ = Ast_NewUnary(AST_NODE_KIND_EXPR_STMT, n, @2); }
     ;
 
 expr_opt
@@ -195,34 +206,35 @@ expr_opt
 /* ---- expressions --------------------------------------------------- */
 
 expr
-    : NUM                  { $$ = Ast_NewNum($1); }
-    | STR                  { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_STR);
+    : NUM                  { $$ = Ast_NewNum($1, @1); }
+    | STR                  { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_STR, @1);
                              n->an_str_idx = Ast_AddString($1); $$ = n; }
     | IDENT
         { Ast_Var *v = Ast_FindVar($1);
-          if (!v) Show_Error("use of undeclared identifier '%s'", $1);
-          $$ = Ast_NewVarNode(v); }
-    | IDENT '(' args ')'
-        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_CALL); n->an_funcname = $1; n->an_args = $3; $$ = n; }
-    | '(' expr ')'         { $$ = $2; }
-    | expr '+' expr        { $$ = Ast_NewBinary(AST_NODE_KIND_ADD, $1, $3); }
-    | expr '-' expr        { $$ = Ast_NewBinary(AST_NODE_KIND_SUB, $1, $3); }
-    | expr '*' expr        { $$ = Ast_NewBinary(AST_NODE_KIND_MUL, $1, $3); }
-    | expr '/' expr        { $$ = Ast_NewBinary(AST_NODE_KIND_DIV, $1, $3); }
-    | expr '%' expr        { $$ = Ast_NewBinary(AST_NODE_KIND_MOD, $1, $3); }
-    | expr EQ expr         { $$ = Ast_NewBinary(AST_NODE_KIND_EQ, $1, $3); }
-    | expr NE expr         { $$ = Ast_NewBinary(AST_NODE_KIND_NE, $1, $3); }
-    | expr '<' expr        { $$ = Ast_NewBinary(AST_NODE_KIND_LT, $1, $3); }
-    | expr '>' expr        { $$ = Ast_NewBinary(AST_NODE_KIND_LT, $3, $1); }  /* a>b  == b<a  */
-    | expr LE expr         { $$ = Ast_NewBinary(AST_NODE_KIND_LE, $1, $3); }
-    | expr GE expr         { $$ = Ast_NewBinary(AST_NODE_KIND_LE, $3, $1); }  /* a>=b == b<=a */
-    | expr AND expr        { $$ = Ast_NewBinary(AST_NODE_KIND_AND, $1, $3); }
-    | expr OR expr         { $$ = Ast_NewBinary(AST_NODE_KIND_OR, $1, $3); }
-    | expr '=' expr
-        { if ($1->an_kind != AST_NODE_KIND_VAR) Show_Error("expression is not assignable");
-          $$ = Ast_NewBinary(AST_NODE_KIND_ASSIGN, $1, $3); }
-    | '-' expr %prec UMINUS { $$ = Ast_NewUnary(AST_NODE_KIND_NEG, $2); }
-    | '!' expr %prec UMINUS { $$ = Ast_NewUnary(AST_NODE_KIND_NOT, $2); }
+          if (! v) Show_ErrorAt(@1, "use of undeclared identifier '%s'", $1);
+          $$ = Ast_NewVarNode(v, @1); }
+    | IDENT LPAREN args RPAREN
+        { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_CALL, @1);
+          n->an_funcname = $1; n->an_args = $3; $$ = n; }
+    | LPAREN expr RPAREN   { $$ = $2; }
+    | expr ADD expr        { $$ = Ast_NewBinary(AST_NODE_KIND_ADD, $1, $3, @2); }
+    | expr SUB expr        { $$ = Ast_NewBinary(AST_NODE_KIND_SUB, $1, $3, @2); }
+    | expr MUL expr        { $$ = Ast_NewBinary(AST_NODE_KIND_MUL, $1, $3, @2); }
+    | expr DIV expr        { $$ = Ast_NewBinary(AST_NODE_KIND_DIV, $1, $3, @2); }
+    | expr MOD expr        { $$ = Ast_NewBinary(AST_NODE_KIND_MOD, $1, $3, @2); }
+    | expr EQ expr         { $$ = Ast_NewBinary(AST_NODE_KIND_EQ, $1, $3, @2); }
+    | expr NE expr         { $$ = Ast_NewBinary(AST_NODE_KIND_NE, $1, $3, @2); }
+    | expr LT expr         { $$ = Ast_NewBinary(AST_NODE_KIND_LT, $1, $3, @2); }
+    | expr GT expr         { $$ = Ast_NewBinary(AST_NODE_KIND_LT, $3, $1, @2); }  /* a>b  == b<a  */
+    | expr LE expr         { $$ = Ast_NewBinary(AST_NODE_KIND_LE, $1, $3, @2); }
+    | expr GE expr         { $$ = Ast_NewBinary(AST_NODE_KIND_LE, $3, $1, @2); }  /* a>=b == b<=a */
+    | expr AND expr        { $$ = Ast_NewBinary(AST_NODE_KIND_AND, $1, $3, @2); }
+    | expr OR expr         { $$ = Ast_NewBinary(AST_NODE_KIND_OR, $1, $3, @2); }
+    | expr ASSIGN expr
+        { if ($1->an_kind != AST_NODE_KIND_VAR) Show_ErrorAt(@2, "expression is not assignable");
+          $$ = Ast_NewBinary(AST_NODE_KIND_ASSIGN, $1, $3, @2); }
+    | SUB expr %prec UMINUS { $$ = Ast_NewUnary(AST_NODE_KIND_NEG, $2, @1); }
+    | NOT expr %prec UMINUS { $$ = Ast_NewUnary(AST_NODE_KIND_NOT, $2, @1); }
     ;
 
 args
@@ -232,13 +244,13 @@ args
 
 arg_list
     : expr                 { $$ = $1; }
-    | expr ',' arg_list    { $1->an_next = $3; $$ = $1; }
+    | expr COMMA arg_list  { $1->an_next = $3; $$ = $1; }
     ;
 
 %%
 
 void yyerror(const char *s)
 {
-    fprintf(stderr, "cc: parse error: %s near line %d\n", s, yylineno);
+    fprintf(stderr, "cc: parse error: %s near line %d\n", s, yylloc);
     exit(1);
 }

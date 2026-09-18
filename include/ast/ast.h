@@ -38,6 +38,7 @@ struct Ast_Var {
     Ast_Var *av_next;       // chains every local in a function
     Ast_Var *av_param_next; // chains parameters in declaration order
     char    *av_name;       // identifier as written in the source
+    int      av_line;       // source line the declaration appeared on
     int      av_offset;     // offset from %rbp, filled in by the back end
 };
 
@@ -45,6 +46,7 @@ struct Ast_Var {
 typedef struct Ast_Node Ast_Node;
 struct Ast_Node {
     Ast_NodeKind an_kind;     // which kind of node this is
+    int          an_line;     // source line the construct started on
     Ast_Node    *an_next;     // next node in a statement / argument list
     Ast_Node    *an_lhs;      // generic left operand
     Ast_Node    *an_rhs;      // generic right operand
@@ -77,16 +79,16 @@ struct Ast_Func {
 extern Ast_Func *Ast_Program;
 
 // Node construction
-Ast_Node *Ast_NewNode(Ast_NodeKind kind);
-Ast_Node *Ast_NewBinary(Ast_NodeKind kind, Ast_Node *lhs, Ast_Node *rhs);
-Ast_Node *Ast_NewUnary(Ast_NodeKind kind, Ast_Node *lhs);
-Ast_Node *Ast_NewNum(long val);
-Ast_Node *Ast_NewVarNode(Ast_Var *var);
+Ast_Node *Ast_NewNode(Ast_NodeKind kind, int line);
+Ast_Node *Ast_NewBinary(Ast_NodeKind kind, Ast_Node *lhs, Ast_Node *rhs, int line);
+Ast_Node *Ast_NewUnary(Ast_NodeKind kind, Ast_Node *lhs, int line);
+Ast_Node *Ast_NewNum(long val, int line);
+Ast_Node *Ast_NewVarNode(Ast_Var *var, int line);
 
 // Variable scopes
 void     Ast_BeginScope(void);
 Ast_Var *Ast_FindVar(const char *name);
-Ast_Var *Ast_DeclareVar(const char *name);
+Ast_Var *Ast_DeclareVar(const char *name, int line);
 Ast_Var *Ast_CurrentLocals(void);
 
 // String literal interning
