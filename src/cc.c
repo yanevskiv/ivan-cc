@@ -1,4 +1,5 @@
 #include <getopt.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,14 +28,17 @@
 // Machine-option prefix recognised inside -m (e.g. -march=x86_64).
 #define MARCH_PREFIX "arch="
 
+// Where the runtime objects sit relative to the directory holding this binary.
+#define RUNTIME_DIR "/../lib"
+
 // Input stream read by the generated lexer.
 extern FILE *yyin;
 
 // Entry point of the generated parser; fills in Ast_Program.
 int yyparse(void);
 
-// Objects the default (linked) output is always merged with.
-static const char *const Cc_Runtime[] = { CRT_PATH, LIBC_PATH };
+// Runtime objects the default (linked) output is always merged with.
+static const char *const Cc_RuntimeNames[] = { "crt0.o", "libc.o" };
 
 // Show usage information and exits.
 static void Cc_ShowUsage(const char *prog)
@@ -44,9 +48,44 @@ static void Cc_ShowUsage(const char *prog)
         "  -o OUTPUT   write output to OUTPUT (default: " DEFAULT_OUTPUT ")\n"
         "  -S          write assembly text instead of an executable\n"
         "  -c          write a relocatable object (.o) instead of an executable\n"
-        "  -march=ARCH target architecture (default: " DEFAULT_ARCH ")\n",
+        "  -march=ARCH target architecture (default: " DEFAULT_ARCH ")\n"
+        "  -B DIR      read the runtime objects from DIR\n",
         prog);
     exit(1);
+}
+
+// Returns the directory holding this executable, or NULL if it cannot be found.
+static char *Cc_ExeDir(void)
+{
+    char    buf[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", buf, sizeof buf - 1);
+    if (len <= 0) {
+        return NULL;
+    }
+    buf[len] = '\0';
+
+    char *slash = strrchr(buf, '/');
+    if (! slash) {
+        return NULL;
+    }
+    *slash = '\0';
+    return strdup(buf);
+}
+
+// Returns the directory to read the runtime objects from, honouring -B.
+static char *Cc_RuntimeDir(const char *prefix)
+{
+    if (prefix) {
+        return strdup(prefix);
+    }
+
+    char *exedir = Cc_ExeDir();
+    if (! exedir) {
+        Show_Error("cannot locate the runtime directory; pass -B DIR");
+    }
+    char *dir = Str_Format("%s" RUNTIME_DIR, exedir);
+    Str_Free(exedir);
+    return dir;
 }
 
 // Writes the program as AT&T assembly text.
@@ -65,17 +104,27 @@ static void Cc_x86_64_WriteObject(FILE *out, Ast_Func *prog)
 }
 
 // Writes the program linked against the runtime as a static executable.
-static void Cc_x86_64_WriteExec(FILE *out, Ast_Func *prog)
+static void Cc_x86_64_WriteExec(FILE *out, Ast_Func *prog, const char *libdir)
 {
     Gen_x86_64_BuildProgram(prog);
     Enc_x86_64_BuildObject();
 
+    int   nruntime = (int) (sizeof Cc_RuntimeNames / sizeof Cc_RuntimeNames[0]);
+    char *runtime[sizeof Cc_RuntimeNames / sizeof Cc_RuntimeNames[0]];
+    for (int i = 0; i < nruntime; i++) {
+        runtime[i] = Str_Format("%s/%s", libdir, Cc_RuntimeNames[i]);
+    }
+
     Elf *obj = Enc_x86_64_GetObject();
     Link_Options opts = { .lo_entry = "_start" };
-    Link_MergeFiles(obj, Cc_Runtime, (int) (sizeof Cc_Runtime / sizeof Cc_Runtime[0]));
+    Link_MergeFiles(obj, (const char *const *) runtime, nruntime);
     Link_Exec(obj, &opts);
 
     Enc_x86_64_Write(out);
+
+    for (int i = 0; i < nruntime; i++) {
+        Str_Free(runtime[i]);
+    }
 }
 
 // Main function
@@ -83,6 +132,7 @@ int main(int argc, char **argv)
 {
     const char *output = NULL;
     const char *arch = DEFAULT_ARCH;
+    const char *prefix = NULL;
     int emit_text = 0;
     int emit_obj = 0;
 
@@ -91,7 +141,7 @@ int main(int argc, char **argv)
     };
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "o:cESgI:D:U:l:L:W:f:m:O::", longopts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:cESgB:I:D:U:l:L:W:f:m:O::", longopts, NULL)) != -1) {
         switch (opt) {
             case 'o': {
                 output = optarg;
@@ -101,6 +151,9 @@ int main(int argc, char **argv)
             } break;
             case 'c': {
                 emit_obj = 1;
+            } break;
+            case 'B': {
+                prefix = optarg;
             } break;
             case 'm': {
                 // -m carries machine options; only -march=ARCH is recognised.
@@ -162,7 +215,9 @@ int main(int argc, char **argv)
     } else if (emit_obj) {
         Cc_x86_64_WriteObject(out, Ast_Program);
     } else {
-        Cc_x86_64_WriteExec(out, Ast_Program);
+        char *libdir = Cc_RuntimeDir(prefix);
+        Cc_x86_64_WriteExec(out, Ast_Program, libdir);
+        Str_Free(libdir);
     }
     fclose(out);
 
