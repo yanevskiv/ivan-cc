@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
+#include "util/log.h"
 #include "util/elf.h"
 #include "util/str.h"
 #include "arch/x86_64/asm.h"
@@ -289,7 +289,7 @@ void Txt_x86_64_Att_ParseInstr(const char *line)
 {
     size_t mlen = strcspn(line, " \t");
     if (mlen == 0 || mlen >= 32) {
-        Show_Error("as: bad mnemonic in '%s'", line);
+        Log_ShowError("as: bad mnemonic in '%s'", line);
     }
     char mnem[32];
     memcpy(mnem, line, mlen);
@@ -310,7 +310,7 @@ void Txt_x86_64_Att_ParseInstr(const char *line)
         op = Txt_x86_64_OpByName(mnem);
     }
     if (op < 0) {
-        Show_Error("as: unknown mnemonic '%.*s'", (int) mlen, line);
+        Log_ShowError("as: unknown mnemonic '%.*s'", (int) mlen, line);
     }
 
     Asm_x86_64_Operand ops[2];
@@ -327,10 +327,10 @@ void Txt_x86_64_Att_ParseInstr(const char *line)
                 continue;
             }
             if (nops >= 2) {
-                Show_Error("as: too many operands in '%s'", line);
+                Log_ShowError("as: too many operands in '%s'", line);
             }
             if (! Txt_x86_64_Att_ParseOperand(text, &ops[nops])) {
-                Show_Error("as: bad operand '%s'", text);
+                Log_ShowError("as: bad operand '%s'", text);
             }
             nops++;
         }

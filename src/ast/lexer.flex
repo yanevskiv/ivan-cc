@@ -9,7 +9,7 @@
 %{
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
+#include "util/log.h"
 #include "util/str.h"
 #include "parser.tab.h"
 
@@ -123,6 +123,6 @@ ALNUM   [A-Za-z_0-9]
 ";"                     return SEMI;
 ","                     return COMMA;
 
-.                       { Show_ErrorAt(yylineno, "lexer: unexpected character '%s'", yytext); }
+.                       { Log_ShowErrorAt(yylineno, "lexer: unexpected character '%s'", yytext); }
 
 %%

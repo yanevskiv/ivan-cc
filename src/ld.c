@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "common.h"
+#include "util/log.h"
 #include "util/elf.h"
 #include "util/str.h"
 #include "util/link.h"
@@ -49,10 +49,10 @@ static void Ld_ParsePlace(const char *spec, Link_Options *opts)
 {
     const char *at = strchr(spec, '@');
     if (! at) {
-        Show_Error("malformed -place (expected SEC@ADDR): '%s'", spec);
+        Log_ShowError("malformed -place (expected SEC@ADDR): '%s'", spec);
     }
     if (opts->lo_nplaces >= LINK_MAX_PLACE) {
-        Show_Error("too many -place options (max %d)", LINK_MAX_PLACE);
+        Log_ShowError("too many -place options (max %d)", LINK_MAX_PLACE);
     }
     opts->lo_places[opts->lo_nplaces].lp_name = Ld_PlaceName(spec, (int) (at - spec));
     opts->lo_places[opts->lo_nplaces].lp_addr = strtoull(at + 1, NULL, 0);

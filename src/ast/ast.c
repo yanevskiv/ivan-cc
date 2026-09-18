@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+#include "util/log.h"
 #include "ast/ast.h"
 
 // The finished program, filled in by the parser.
@@ -129,7 +129,7 @@ Ast_Var *Ast_CurrentLocals(void)
 int Ast_AddString(char *str, int len)
 {
     if (Ast_NumStrings >= MAX_STRINGS) {
-        Show_Error("too many string literals (max %d)", MAX_STRINGS);
+        Log_ShowError("too many string literals (max %d)", MAX_STRINGS);
     }
     Ast_Strings[Ast_NumStrings].as_data = str;
     Ast_Strings[Ast_NumStrings].as_len  = len;

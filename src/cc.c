@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "common.h"
+#include "util/log.h"
 #include "ast/ast.h"
 #include "ast/sem.h"
 #include "util/elf.h"
@@ -81,7 +81,7 @@ static char *Cc_GetRuntimeDir(const char *prefix)
 
     char *exedir = Cc_GetExeDir();
     if (! exedir) {
-        Show_Error("cannot locate the runtime directory; pass -B DIR");
+        Log_ShowError("cannot locate the runtime directory; pass -B DIR");
     }
     char *dir = Str_Format("%s" RUNTIME_DIR, exedir);
     Str_Free(exedir);
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
     }
 
     if (! Str_Equals(arch, DEFAULT_ARCH)) {
-        Show_Error("unsupported architecture '%s' (only " DEFAULT_ARCH " is supported)", arch);
+        Log_ShowError("unsupported architecture '%s' (only " DEFAULT_ARCH " is supported)", arch);
     }
 
     if (optind >= argc) {

@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
+#include "util/log.h"
 #include "util/elf.h"
 #include "util/link.h"
 #include "arch/x86_64/rel.h"
@@ -93,7 +93,7 @@ void Link_Merge(Elf *out, Elf *in)
         }
         if (dsec) {
             if (existing->sym_sec) {
-                Show_Error("multiple definition of '%s'", sym->sym_name);
+                Log_ShowError("multiple definition of '%s'", sym->sym_name);
             }
             existing->sym_sec   = dsec;
             existing->sym_value = value;
@@ -127,7 +127,7 @@ void Link_MergeFiles(Elf *out, const char *const *paths, int npaths)
     for (int i = 0; i < npaths; i++) {
         Elf *in = Elf_Read(paths[i]);
         if (! in) {
-            Show_Error("cannot read object '%s'", paths[i]);
+            Log_ShowError("cannot read object '%s'", paths[i]);
         }
         Link_Merge(out, in);
         Elf_Free(in);
@@ -177,7 +177,7 @@ void Link_CheckDefined(Elf *elf)
         for (size_t r = 0; r < Elf_RelaCount(sec); r++) {
             Elf_Sym *sym = Elf_RelaAt(sec, r)->rel_sym;
             if (! sym || ! sym->sym_sec) {
-                Show_Error("undefined symbol '%s'", sym ? sym->sym_name : "?");
+                Log_ShowError("undefined symbol '%s'", sym ? sym->sym_name : "?");
             }
         }
     }
@@ -193,7 +193,7 @@ void Link_Exec(Elf *elf, const Link_Options *opts)
 
     Elf_Sym *sym = Elf_SymbolFind(elf, entry);
     if (! sym || ! sym->sym_sec) {
-        Show_Error("undefined entry symbol '%s'", entry);
+        Log_ShowError("undefined entry symbol '%s'", entry);
     }
     Elf_SetEntry(elf, sym->sym_sec->sec_addr + sym->sym_value);
 

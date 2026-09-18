@@ -15,7 +15,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "common.h"
+#include "util/log.h"
 #include "ast/ast.h"
 
 int  yylex(void);
@@ -229,7 +229,7 @@ expr
                              n->an_str_idx = Ast_AddString($1.as_data, $1.as_len); $$ = n; }
     | IDENT
         { Ast_Var *v = Ast_FindVar($1);
-          if (! v) Show_ErrorAt(@1, "use of undeclared identifier '%s'", $1);
+          if (! v) Log_ShowErrorAt(@1, "use of undeclared identifier '%s'", $1);
           $$ = Ast_NewVarNode(v, @1); }
     | IDENT LPAREN args RPAREN
         { Ast_Node *n = Ast_NewNode(AST_NODE_KIND_CALL, @1);

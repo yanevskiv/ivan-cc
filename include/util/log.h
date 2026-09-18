@@ -1,11 +1,11 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef LOG_H
+#define LOG_H
 
 #include <stdio.h>
 #include <stdlib.h>
 
 // Prints a diagnostic and exits; shared by the lexer, parser and back end.
-#define Show_Error(...)                 \
+#define Log_ShowError(...)              \
     do {                                \
         fprintf(stderr, "cc: error: "); \
         fprintf(stderr, __VA_ARGS__);   \
@@ -14,7 +14,7 @@
     } while (0)
 
 // Prints a diagnostic naming the source line it came from and exits.
-#define Show_ErrorAt(line, ...)                          \
+#define Log_ShowErrorAt(line, ...)                       \
     do {                                                 \
         fprintf(stderr, "cc: error: line %d: ", (line)); \
         fprintf(stderr, __VA_ARGS__);                    \
@@ -23,11 +23,11 @@
     } while (0)
 
 // Prints a warning diagnostic and continues; shared by the lexer, parser and back end.
-#define Show_Warning(...)                 \
+#define Log_ShowWarning(...)              \
     do {                                  \
         fprintf(stderr, "cc: warning: "); \
         fprintf(stderr, __VA_ARGS__);     \
         fprintf(stderr, "\n");            \
     } while (0)
 
-#endif // COMMON_H
+#endif // LOG_H

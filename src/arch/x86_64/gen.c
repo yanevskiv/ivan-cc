@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "common.h"
+#include "util/log.h"
 #include "ast/ast.h"
 #include "util/elf.h"
 #include "arch/x86_64/asm.h"
@@ -73,7 +73,7 @@ void Gen_x86_64_EmitAddr(Ast_Node *node)
         Asm_x86_64_EmitLea(ASM_X86_64_REG_RBP, node->an_var->av_offset, ASM_X86_64_REG_RAX);
         return;
     }
-    Show_ErrorAt(node->an_line, "codegen: not an lvalue");
+    Log_ShowErrorAt(node->an_line, "codegen: not an lvalue");
 }
 
 // Counts the arguments in a call's argument list.
@@ -234,7 +234,7 @@ void Gen_x86_64_EmitExpr(Ast_Node *node)
                     Asm_x86_64_EmitMovzb(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RAX);
                 } break;
                 default: {
-                    Show_ErrorAt(node->an_line, "codegen: unexpected node kind %d", node->an_kind);
+                    Log_ShowErrorAt(node->an_line, "codegen: unexpected node kind %d", node->an_kind);
                 }
             }
         }
@@ -296,7 +296,7 @@ void Gen_x86_64_EmitStmt(Ast_Node *node)
             // nothing to emit
         } break;
         default: {
-            Show_ErrorAt(node->an_line, "codegen: unexpected statement kind %d", node->an_kind);
+            Log_ShowErrorAt(node->an_line, "codegen: unexpected statement kind %d", node->an_kind);
         }
     }
 }

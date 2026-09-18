@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "common.h"
+#include "util/log.h"
 #include "ast/sem.h"
 
 // The program being analysed, for resolving calls against its definitions.
@@ -39,7 +39,7 @@ void Sem_CheckCall(Ast_Node *node)
     }
     int given = Sem_CountNodes(node->an_args);
     if (given != func->af_nparams) {
-        Show_ErrorAt(node->an_line, "wrong number of arguments to '%s': got %d, expected %d", node->an_funcname, given, func->af_nparams);
+        Log_ShowErrorAt(node->an_line, "wrong number of arguments to '%s': got %d, expected %d", node->an_funcname, given, func->af_nparams);
     }
 }
 
@@ -89,7 +89,7 @@ void Sem_Node(Ast_Node *node)
 
         case AST_NODE_KIND_ASSIGN: {
             if (node->an_lhs->an_kind != AST_NODE_KIND_VAR) {
-                Show_ErrorAt(node->an_line, "expression is not assignable");
+                Log_ShowErrorAt(node->an_line, "expression is not assignable");
             }
             node->an_type = node->an_lhs->an_type;
         } break;
