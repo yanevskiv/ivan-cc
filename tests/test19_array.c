@@ -1,5 +1,11 @@
 // (Test) Return: 60
-// Subscripting reads and writes elements, and an array's name is its address.
+// Subscripting reads and writes elements, an array's name is its address, and
+// an array parameter is really a pointer.
+
+int third(int a[])
+{
+    return a[2];
+}
 
 int main()
 {
@@ -21,6 +27,7 @@ int main()
     s[2] = 0;
     if (s[1] != 66) return 5;
     if (a[4] != 40) return 6;
+    if (third(a) != 20) return 7;
 
     a[2] = a[2] + 5;
 

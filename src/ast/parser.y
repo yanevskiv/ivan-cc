@@ -58,6 +58,15 @@ static Ast_Type *Par_ArrayType(Ast_Type *base, Ast_Node *dims)
     return Ast_NewArray(Par_ArrayType(base, dims->an_next), (int) dims->an_val);
 }
 
+/* Give a parameter its adjusted type: an array parameter is really a pointer. */
+static Ast_Type *Par_ParamType(Ast_Type *base, Ast_Node *dims)
+{
+    if (! dims) {
+        return base;
+    }
+    return Ast_NewPointer(Par_ArrayType(base, dims->an_next));
+}
+
 /* Append a finished function to the program. */
 static void Par_AddFunction(Ast_Func *fn)
 {
@@ -92,7 +101,7 @@ static void Par_AddFunction(Ast_Func *fn)
 %token LPAREN RPAREN LSQUARE RSQUARE LBRACE RBRACE SEMI COMMA ELLIPSIS
 
 %type <node> stmt stmt_list compound_stmt decl expr expr_opt args arg_list
-%type <node> cast unary postfix primary array_dims
+%type <node> cast unary postfix primary array_dims param_dims
 %type <type> type_name base
 %type <num>  stars
 
@@ -155,9 +164,17 @@ param_list
     ;
 
 param
-    : type_name IDENT   { Par_AddParam(Ast_DeclareVar($2, $1, @2)); }
+    : type_name IDENT param_dims
+        { Par_AddParam(Ast_DeclareVar($2, Par_ParamType($1, $3), @2)); }
     | type_name         /* unnamed parameter, e.g. `void` */
     | ELLIPSIS          /* variadic marker, ignored */
+    ;
+
+/* A parameter may leave its first dimension empty, as `int a[]` does. */
+param_dims
+    : array_dims                  { $$ = $1; }
+    | LSQUARE RSQUARE array_dims
+        { Ast_Node *n = Ast_NewNum(0, @1); n->an_next = $3; $$ = n; }
     ;
 
 /* ---- types -------------------------------------------------------- */
