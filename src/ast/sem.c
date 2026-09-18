@@ -6,9 +6,6 @@
 // The program being analysed, for resolving calls against its definitions.
 static Ast_Func *Sem_Prog;
 
-// The type of a string literal, built once and shared.
-static Ast_Type *Sem_TypeCharPtr;
-
 // Return the function of that name defined in this program, or NULL.
 Ast_Func *Sem_FindFunc(const char *name)
 {
@@ -156,7 +153,8 @@ void Sem_Node(Ast_Node *node)
         } break;
 
         case AST_NODE_KIND_STR: {
-            node->an_type = Sem_TypeCharPtr;
+            Ast_Str *str = Ast_StringAt(node->an_str_idx);
+            node->an_type = Ast_NewArray(&Ast_TypeChar, str->as_len + 1);
         } break;
 
         case AST_NODE_KIND_ADDR: {
@@ -221,7 +219,6 @@ void Sem_Node(Ast_Node *node)
 void Sem_Analyze(Ast_Func *prog)
 {
     Sem_Prog = prog;
-    Sem_TypeCharPtr = Ast_NewPointer(&Ast_TypeChar);
 
     for (Ast_Func *func = prog; func; func = func->af_next) {
         Sem_Node(func->af_body);
