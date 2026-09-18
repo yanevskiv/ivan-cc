@@ -55,7 +55,7 @@ static void Cc_ShowUsage(const char *prog)
 }
 
 // Returns the directory holding this executable, or NULL if it cannot be found.
-static char *Cc_ExeDir(void)
+static char *Cc_GetExeDir(void)
 {
     char    buf[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", buf, sizeof buf - 1);
@@ -73,13 +73,13 @@ static char *Cc_ExeDir(void)
 }
 
 // Returns the directory to read the runtime objects from, honouring -B.
-static char *Cc_RuntimeDir(const char *prefix)
+static char *Cc_GetRuntimeDir(const char *prefix)
 {
     if (prefix) {
         return strdup(prefix);
     }
 
-    char *exedir = Cc_ExeDir();
+    char *exedir = Cc_GetExeDir();
     if (! exedir) {
         Show_Error("cannot locate the runtime directory; pass -B DIR");
     }
@@ -104,11 +104,12 @@ static void Cc_x86_64_WriteObject(FILE *out, Ast_Func *prog)
 }
 
 // Writes the program linked against the runtime as a static executable.
-static void Cc_x86_64_WriteExec(FILE *out, Ast_Func *prog, const char *libdir)
+static void Cc_x86_64_WriteExec(FILE *out, Ast_Func *prog, const char *prefix)
 {
     Gen_x86_64_BuildProgram(prog);
     Enc_x86_64_BuildObject();
 
+    char *libdir = Cc_GetRuntimeDir(prefix);
     int   nruntime = (int) (sizeof Cc_RuntimeNames / sizeof Cc_RuntimeNames[0]);
     char *runtime[sizeof Cc_RuntimeNames / sizeof Cc_RuntimeNames[0]];
     for (int i = 0; i < nruntime; i++) {
@@ -125,6 +126,7 @@ static void Cc_x86_64_WriteExec(FILE *out, Ast_Func *prog, const char *libdir)
     for (int i = 0; i < nruntime; i++) {
         Str_Free(runtime[i]);
     }
+    Str_Free(libdir);
 }
 
 // Main function
@@ -215,9 +217,7 @@ int main(int argc, char **argv)
     } else if (emit_obj) {
         Cc_x86_64_WriteObject(out, Ast_Program);
     } else {
-        char *libdir = Cc_RuntimeDir(prefix);
-        Cc_x86_64_WriteExec(out, Ast_Program, libdir);
-        Str_Free(libdir);
+        Cc_x86_64_WriteExec(out, Ast_Program, prefix);
     }
     fclose(out);
 
