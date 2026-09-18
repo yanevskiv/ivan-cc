@@ -106,6 +106,7 @@ void Sem_Node(Ast_Node *node)
         case AST_NODE_KIND_BLOCK:
         case AST_NODE_KIND_EXPR_STMT:
         case AST_NODE_KIND_NOP: {
+            // empty
         } break;
     }
 }

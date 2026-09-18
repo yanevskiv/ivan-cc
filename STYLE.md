@@ -26,8 +26,9 @@
 - Always brace a controlled block, even a single statement.
 - Every `switch` case is a braced block written `case X: { ... } break;`,
   with the `break` after the closing brace. No one-line cases, and an empty
-  body still gets its `{ }`. Labels that share a body stack above it, and
-  the brace opens on the last one.
+  body still gets its `{ }` with `// empty` inside, so a reader can tell a
+  deliberate no-op from an unfinished one. Labels that share a body stack
+  above it, and the brace opens on the last one.
 - Negation is written `! x`, not `!x` — a bare `!` reads too easily as a
   typo or gets lost before a long expression.
 - Casts are written `(type) expr` with a space, not `(type)expr`.
