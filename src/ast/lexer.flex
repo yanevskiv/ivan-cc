@@ -62,9 +62,9 @@ static char *Lex_Unescape(const char *p, int len, int *out_len)
 
 %}
 
-D   [0-9]
-L   [A-Za-z_]
-A   [A-Za-z_0-9]
+DIGIT   [0-9]
+ALPHA   [A-Za-z_]
+ALNUM   [A-Za-z_0-9]
 
 %%
 
@@ -84,10 +84,10 @@ A   [A-Za-z_0-9]
 "break"                 return BREAK;
 "continue"              return CONTINUE;
 
-{L}{A}*                 { yylval.str = strdup(yytext); return IDENT; }
+{ALPHA}{ALNUM}*         { yylval.str = strdup(yytext); return IDENT; }
 
 0[xX][0-9A-Fa-f]+       { yylval.num = strtol(yytext, NULL, 16); return NUM; }
-{D}+                    { yylval.num = strtol(yytext, NULL, 10); return NUM; }
+{DIGIT}+                { yylval.num = strtol(yytext, NULL, 10); return NUM; }
 
 \"([^"\\\n]|\\.)*\"     { Ast_Str *lit = &yylval.str_lit;
                           lit->as_data = Lex_Unescape(yytext + 1, yyleng - 2, &lit->as_len);
