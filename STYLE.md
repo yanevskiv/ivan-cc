@@ -35,7 +35,9 @@
 - Related consecutive declarations align their names/types/initializers in
   columns when it doesn't hurt readability (see any struct definition or a
   short run of assignments). Don't force alignment across unrelated lines.
-- Keep lines within roughly 100 columns.
+- Keep lines within roughly 100 columns. A function declaration or
+  definition is the exception: it stays on one line however long it gets,
+  never wrapped across two.
 
 ## Structure
 

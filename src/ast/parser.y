@@ -33,19 +33,29 @@ static int      cur_nparams;
 /* The program is assembled here as functions are reduced. */
 static Ast_Func *prog_head, *prog_tail;
 
+/* Appends a parameter to the function currently being parsed. */
 static void add_param(Ast_Var *v)
 {
     v->av_param_next = NULL;
-    if (!cur_params) cur_params = cur_params_tail = v;
-    else { cur_params_tail->av_param_next = v; cur_params_tail = v; }
+    if (! cur_params) {
+        cur_params = cur_params_tail = v;
+    } else {
+        cur_params_tail->av_param_next = v;
+        cur_params_tail = v;
+    }
     cur_nparams++;
 }
 
+/* Appends a finished function to the program. */
 static void add_function(Ast_Func *fn)
 {
     fn->af_next = NULL;
-    if (!prog_head) prog_head = prog_tail = fn;
-    else { prog_tail->af_next = fn; prog_tail = fn; }
+    if (! prog_head) {
+        prog_head = prog_tail = fn;
+    } else {
+        prog_tail->af_next = fn;
+        prog_tail = fn;
+    }
     Ast_Program = prog_head;
 }
 %}

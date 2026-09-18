@@ -89,7 +89,7 @@ int Gen_x86_64_CallCountArgs(Ast_Node *args)
 // Evaluates call arguments and pushes them so the first lands on top.
 void Gen_x86_64_CallPushArgs(Ast_Node *arg)
 {
-    if (!arg) {
+    if (! arg) {
         return;
     }
     Gen_x86_64_CallPushArgs(arg->an_next);
@@ -348,7 +348,8 @@ void Gen_x86_64_EmitFunctions(Ast_Func *prog)
             if (i < MAX_REG_ARGS) {
                 Asm_x86_64_EmitMovStore(Gen_x86_64_ArgReg[i], ASM_X86_64_REG_RBP, param->av_offset);
             } else {
-                Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RBP, 2 * WORD_SIZE + (i - MAX_REG_ARGS) * WORD_SIZE, ASM_X86_64_REG_RAX);
+                int off = 2 * WORD_SIZE + (i - MAX_REG_ARGS) * WORD_SIZE;
+                Asm_x86_64_EmitMovLoad(ASM_X86_64_REG_RBP, off, ASM_X86_64_REG_RAX);
                 Asm_x86_64_EmitMovStore(ASM_X86_64_REG_RAX, ASM_X86_64_REG_RBP, param->av_offset);
             }
             i++;

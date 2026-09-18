@@ -89,7 +89,8 @@ A   [A-Za-z_0-9]
 0[xX][0-9A-Fa-f]+       { yylval.num = strtol(yytext, NULL, 16); return NUM; }
 {D}+                    { yylval.num = strtol(yytext, NULL, 10); return NUM; }
 
-\"([^"\\\n]|\\.)*\"     { yylval.str_lit.as_data = Lex_Unescape(yytext + 1, yyleng - 2, &yylval.str_lit.as_len);
+\"([^"\\\n]|\\.)*\"     { Ast_Str *lit = &yylval.str_lit;
+                          lit->as_data = Lex_Unescape(yytext + 1, yyleng - 2, &lit->as_len);
                           return STR; }
 '([^'\\\n]|\\.)'        { int n; char *s = Lex_Unescape(yytext + 1, yyleng - 2, &n);
                           yylval.num = (unsigned char) s[0]; Str_Free(s); return NUM; }
